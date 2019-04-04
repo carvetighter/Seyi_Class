@@ -8,6 +8,7 @@ dependencies:
   - scikit-learn
   - spyder
   - pandas
+  - matplotlib
   - pip:
     - git+https://github.com/carvetighter/Timer@master
 

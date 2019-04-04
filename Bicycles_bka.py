@@ -8,6 +8,10 @@
 import numpy as np
 import pandas as pd
 import os
+from time import time
+
+import warnings
+warnings.simplefilter('ignore')
 
 
 # In[187]:
@@ -63,15 +67,16 @@ data.head()
 
 
 #Save Clean data
-
-data.to_csv ("C:/Users/Sdeol/Desktop/all/bikebuyer2.csv")
+string_file_data = 'bikebuyer2.csv'
+string_pf_bb2 = os.path.join(string_path, string_file_data)
+data.to_csv(string_pf_bb2, index = False)
 
 
 # In[194]:
 
 
 
-df= pd.read_csv ("C:/Users/Sdeol/Desktop/all/bikebuyer2.csv")
+df= pd.read_csv(string_pf_bb2)
 
 
 # In[195]:
@@ -92,7 +97,7 @@ df.head()
 #Separate into dependent and independent variables
 
 X = df.iloc[:,:-1].values
-y = df.iloc[:,2].values
+y = df.iloc[:,1].values
 print(y)
 
 
@@ -256,7 +261,9 @@ df_complete['BikeBuyer']=df_complete['BikeBuyer'].fillna(median_value)
 
 
 #saving data to a file
-df_complete.to_csv('C:/Users/Sdeol/Desktop/all/bicyclefinal.csv')
+string_file_comp = 'bicyclefina.csv'
+string_pf_comp = os.path.join(string_path, string_file_comp)
+df_complete.to_csv(string_pf_comp)
 
 
 # In[242]:
@@ -281,7 +288,8 @@ from sklearn.svm import SVC
 
 
 #Splitting dataset
-from sklearn.cross_validation import train_test_split
+#from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 x_train,x_test, y_train, y_test = train_test_split(X,y, test_size = 0.25, random_state = 42)
 
 
@@ -295,7 +303,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 #Import and fit LogisticRegression classifier
-from sklearn.linear_model import LogisticRegression
+#from sklearn.linear_model import LogisticRegression
 log_reg = LogisticRegression(random_state=42)
 log_reg.fit(x_train, y_train.ravel())
 
