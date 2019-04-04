@@ -72,6 +72,7 @@ class BicycleAnalysis(object):
         self.string_model_path = os.path.abspath('./models')
         self.string_file_test = 'test_technidus_clf.csv'
         self.string_file_train = 'train_technidus_clf.csv'
+        self.set_source_files = set([self.string_file_test, self.string_file_train])
 
         #--------------------------------------------------------------------------#
         # data containers
@@ -129,6 +130,8 @@ class BicycleAnalysis(object):
         ###############################################
         ###############################################
 
+        bool_missing_data = self.load_data()
+
         #--------------------------------------------------------------------------#
         # sub-section comment
         #--------------------------------------------------------------------------#
@@ -150,6 +153,91 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------#
 
         return
+
+    #--------------------------------------------------------------------------#
+    # callable methods
+    #--------------------------------------------------------------------------#
+
+    def load_data(self):
+        '''
+        this method loads the data from the data directory
+
+        Requirements:
+        package pandas
+        package os
+
+        Inputs:
+        None
+        Type: n/a
+        Desc: n/a
+
+        Important Info:
+        None
+
+        Return:
+        None
+        Type: n/a
+        Desc:
+        '''
+
+        #--------------------------------------------------------------------------------#
+        # objects declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # time declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # lists declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # variables declarations
+        #--------------------------------------------------------------------------------#
+
+        ###############################################
+        ###############################################
+        #
+        # walk through the data directory
+        #
+        ###############################################
+        ###############################################
+
+        for string_root, list_dir, list_files in os.walk(self.string_data_path):
+            set_files_in_data_dir = set(list_files)
+            break
+
+        bool_missing_data_file = False
+        list_missing_files = list()
+        for string_file in self.set_source_files:
+            if string_file not in set_files_in_data_dir:
+                bool_missing_data_file = True
+                list_missing_files.append(string_file)
+
+        ###############################################
+        ###############################################
+        #
+        # load data or print out missing files
+        #
+        ###############################################
+        ###############################################
+
+        if bool_missing_data_file:
+            string_mf_templ = 'missing {0} data file'
+            for string_df in list_missing_files:
+                print(string_mf_templ.format(string_df))
+        else:
+            self.df_test_raw = pandas.read_csv(
+                os.path.join(self.string_data_path, self.string_file_test))
+            self.df_train_raw = pandas.read_csv(
+                os.path.join(self.string_data_path, self.string_file_train))
+
+        #--------------------------------------------------------------------------#
+        # return value
+        #--------------------------------------------------------------------------#
+
+        return bool_missing_data_file
 
     def def_Methods(self, list_cluster_results, array_sparse_matrix):
         '''
