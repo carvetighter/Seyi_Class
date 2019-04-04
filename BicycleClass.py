@@ -26,17 +26,17 @@ warnings.simplefilter('ignore')
 
 class BicycleAnalysis(object):
     '''
-    This class ??
+    This class analyzes of a Bicycle purchase dataset.
 
     Requirements:
-    ??
+    package pandas
+    package scikit-learn
 
     Methods:
     ??
-    
+
     Attributes:
-    ??on is open
-            False -> connection is closed
+    ??
     '''
 
     #--------------------------------------------------------------------------#
