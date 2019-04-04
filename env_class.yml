@@ -6,6 +6,8 @@ dependencies:
   - pylint
   - pytest
   - scikit-learn
+  - spyder
+  - pandas
   - pip:
     - git+https://github.com/carvetighter/Timer@master
 

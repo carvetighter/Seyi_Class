@@ -7,14 +7,22 @@
 #Import Libraries
 import numpy as np
 import pandas as pd
+import os
 
 
 # In[187]:
 
 
+# file paths
+string_path = os.path.abspath('./')
+string_file_train = 'train_technidus_clf.csv'
+string_file_test = 'test_technidus_clf.csv'
+string_fp_train = os.path.join(string_path, string_file_train)
+string_fp_test = os.path.join(string_path, string_file_test)
+
 #Read CSV files into python
-Df_1 = pd.read_csv ("C:/Users/Sdeol/Desktop/all/train_technidus_clf.csv")
-Df_2 = pd.read_csv ("C:/Users/Sdeol/Desktop/all/test_technidus_clf.csv")
+Df_1 = pd.read_csv(string_fp_train)
+Df_2 = pd.read_csv(string_fp_test)
 
 Df_1.head()
 
