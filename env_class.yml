@@ -1,0 +1,11 @@
+name: seyi_class
+channels: 
+  - defaults
+dependencies:
+  - python=3.7
+  - pylint
+  - pytest
+  - scikit-learn
+  - pip:
+    - git+https://github.com/carvetighter/Timer@master
+
