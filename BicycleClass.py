@@ -10,6 +10,7 @@
 ###############################################
 
 from time import time
+from matplotlib import pyplot
 import pandas
 import os
 
@@ -239,6 +240,123 @@ class BicycleAnalysis(object):
 
         return not bool_missing_data_file
 
+    def explore(self, m_bool_train = True, m_string_flag = 'basic'):
+        '''
+        this method explores a pandas dataframe
+
+        Requirements:
+        package pandas
+        package os
+
+        Inputs:
+        m_bool_train
+        Type: boolean
+        Desc: determine which set to load and explore
+
+        m_string_flag
+        Type: string
+        Desc: flag for the type of analysis to do
+
+        Important Info:
+        None
+
+        Return:
+        None
+        Type: n/a
+        Desc:
+        '''
+        
+        #--------------------------------------------------------------------------------#
+        # objects declarations
+        #--------------------------------------------------------------------------------#
+
+        if m_bool_train:
+            df_data = self.df_train_raw
+            string_test_train = 'training'
+        else:
+            df_data = self.df_test_raw
+            string_test_train = 'test'
+
+        #--------------------------------------------------------------------------------#
+        # time declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # lists declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # variables declarations
+        #--------------------------------------------------------------------------------#
+
+        string_status_templ = 'Exploring {0} data set.\n'
+
+        ###############################################
+        ###############################################
+        #
+        # start the data exploration
+        #
+        ###############################################
+        ###############################################
+
+        print(string_status_templ.format(string_test_train))
+
+        if m_string_flag == 'basic':
+            print(df_data.info(verbose = True))
+            print(df_data.head(3))
+
+        #--------------------------------------------------------------------------#
+        # loop through the columns and plot
+        #--------------------------------------------------------------------------#
+
+        if m_string_flag == 'categorical_columns':
+            for string_column in df_data.columns:
+                if df_data[string_column].dtype == 'object':
+                    list_y_values = list()
+                    list_x_values = list(df_data[string_column].unique())
+                    for string_value in list_x_values:
+                        array_x_bool = df_data[string_column] == string_value
+                        list_y_values.append(array_x_bool.sum())
+                    series_values = pandas.Series(data = list_y_values, index = list_x_values)
+                    series_values = series_values.sort_values(ascending = False)
+                    int_max = 10
+                    fig, ax = pyplot.subplots()
+                    ax.bar(
+                        x = series_values.index.values.tolist()[:int_max],
+                        height  = series_values[:int_max].values)
+                    ax.tick_params(axis = 'x', rotation = 35)
+                    ax.set_ylabel('Count')
+                    ax.set_title(string_column)
+                    pyplot.show()
+        
+        #--------------------------------------------------------------------------#
+        # look at the distribution of the prediction column
+        #--------------------------------------------------------------------------#
+
+        if m_string_flag == 'prediction_column':
+            list_y_values = list()
+            list_x_values = list(df_data['BikeBuyer'].unique())
+            for string_value in list_x_values:
+                array_x_bool = df_data['BikeBuyer'] == string_value
+                list_y_values.append(array_x_bool.sum())
+            series_values = pandas.Series(data = list_y_values, index = list_x_values)
+            series_values = series_values.sort_values(ascending = False)
+            fig, ax = pyplot.subplots()
+            ax.bar(
+                x = series_values.index.values.tolist(),
+                height  = series_values.values)
+            ax.set_ylabel('Count')
+            ax.set_xticks([0, 1])
+            ax.set_title('BikeBuyer Yes (1) or No (0)')
+            pyplot.show()
+
+        #--------------------------------------------------------------------------#
+        # return value
+        #--------------------------------------------------------------------------#
+
+        return 
+
+    
     #--------------------------------------------------------------------------#
     # supportive methods
     #--------------------------------------------------------------------------#
