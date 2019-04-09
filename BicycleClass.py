@@ -246,11 +246,11 @@ class BicycleAnalysis(object):
             # find the common columns to both sets
             set_train_cols = set(self.df_train_raw.columns)
             set_test_cols = set(self.df_test_raw.columns)
-            set_common_cols = set_train_cols & set_test_cols
+            list_common_cols = list(set_train_cols & set_test_cols)
             
             # filter dataframes
-            self.df_test_raw = self.df_test_raw[set_common_cols]
-            self.df_train_raw = self.df_train_raw[set_common_cols]
+            self.df_test_raw = self.df_test_raw[list_common_cols]
+            self.df_train_raw = self.df_train_raw[list_common_cols]
         
         #--------------------------------------------------------------------------#
         # return value
