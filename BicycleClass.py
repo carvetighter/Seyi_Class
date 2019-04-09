@@ -159,7 +159,7 @@ class BicycleAnalysis(object):
     # callable methods
     #--------------------------------------------------------------------------#
 
-    def load_data(self):
+    def load_data(self, m_bool_filter_columns = False):
         '''
         this method loads the data from the data directory
 
@@ -234,6 +234,24 @@ class BicycleAnalysis(object):
             self.df_train_raw = pandas.read_csv(
                 os.path.join(self.string_data_path, self.string_file_train))
 
+        ###############################################
+        ###############################################
+        #
+        # filter columns
+        #
+        ###############################################
+        ###############################################
+
+        if not bool_missing_data_file and m_bool_filter_columns:
+            # find the common columns to both sets
+            set_train_cols = set(self.df_train_raw.columns)
+            set_test_cols = set(self.df_test_raw.columns)
+            set_common_cols = set_train_cols & set_test_cols
+            
+            # filter dataframes
+            self.df_test_raw = self.df_test_raw[set_common_cols]
+            self.df_train_raw = self.df_train_raw[set_common_cols]
+        
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
