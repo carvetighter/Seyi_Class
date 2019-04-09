@@ -179,7 +179,7 @@ class BicycleAnalysis(object):
         Type: n/a
         Desc:
         '''
-
+        
         #--------------------------------------------------------------------------------#
         # objects declarations
         #--------------------------------------------------------------------------------#
@@ -237,7 +237,7 @@ class BicycleAnalysis(object):
         # return value
         #--------------------------------------------------------------------------#
 
-        return bool_missing_data_file
+        return not bool_missing_data_file
 
     #--------------------------------------------------------------------------#
     # supportive methods
