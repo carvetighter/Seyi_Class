@@ -4,4 +4,4 @@ __pycache__
 .vscode
 
 # files
-Untitled.ipynb
+*.ipynb*

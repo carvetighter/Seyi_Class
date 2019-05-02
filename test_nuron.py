@@ -11,6 +11,7 @@ file documentation
 
 from time import time
 from matplotlib import pyplot
+from collections import Counter
 import pandas
 import os
 
@@ -39,3 +40,5 @@ string_file_train_raw = 'train_technidus_clf.csv'
 
 df_test_raw = pandas.read_csv(os.path.join(string_path, string_file_test_raw))
 df_train_raw = pandas.read_csv(os.path.join(string_path, string_file_train_raw))
+
+type(df_test_raw.dtypes)
