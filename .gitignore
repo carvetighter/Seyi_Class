@@ -1,6 +1,7 @@
 # directories
 __pycache__
 .ipynb_checkpoints
+.vscode
 
 # files
 Untitled.ipynb
