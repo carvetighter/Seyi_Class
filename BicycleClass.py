@@ -11,7 +11,9 @@
 
 from time import time
 from matplotlib import pyplot
+from collections import Counter
 import pandas
+import numpy
 import os
 
 import warnings
@@ -414,6 +416,8 @@ class BicycleAnalysis(object):
         set_train_cols = set(self.df_train_raw.columns)
         set_test_cols = set(self.df_test_raw.columns)
         list_common_cols = list(set_train_cols & set_test_cols)
+        if 'BikeBuyer' in list_common_cols:
+            list_common_cols.remove('BikeBuyer')
 
         #--------------------------------------------------------------------------------#
         # variables declarations
@@ -428,9 +432,14 @@ class BicycleAnalysis(object):
         ###############################################
 
         for string_col in list_common_cols:
-            if self.df_test_raw[string_col].dtype == 'object':
+            # test of the column is an object -> numpy.dtype('O')
+            if self.df_test_raw[string_col].dtype == numpy.dtype('O'):
                 pass
-            elif self.df_test_raw[string_col].dtype == '':
+            # test of column is a type of integer
+            elif 'int' in str(self.df_test_raw[string_col].dtype):
+                pass
+            else:
+                pass
 
         #--------------------------------------------------------------------------#
         # start loop through
