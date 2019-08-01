@@ -260,23 +260,19 @@ class BicycleAnalysis(object):
 
         return not bool_missing_data_file
 
-    def explore(self, m_bool_train = True, m_string_flag = 'basic'):
+    def compare_train_test(self, m_list_flags = ['categorical_columns']):
         '''
-        this method explores a pandas dataframe
+        plots both train and test data based on the flags passed
 
         Requirements:
         package pandas
         package os
+        package matplotlib.pyplot
 
         Inputs:
-        m_bool_train
-        Type: boolean
-        Desc: determine which set to load and explore
-
-        m_string_flag
-        Type: string
+        m_string_flags
+        Type: list
         Desc: flag for the type of analysis to do
-            'basic' -> dataframe info and first three records
             'categorical_columns' -> bar charts of categorical columns
             'prediction_column' -> bar chart of prediction column
 
@@ -293,13 +289,6 @@ class BicycleAnalysis(object):
         # objects declarations
         #--------------------------------------------------------------------------------#
 
-        if m_bool_train:
-            df_data = self.df_train_raw
-            string_test_train = 'training'
-        else:
-            df_data = self.df_test_raw
-            string_test_train = 'test'
-
         #--------------------------------------------------------------------------------#
         # time declarations
         #--------------------------------------------------------------------------------#
@@ -308,11 +297,13 @@ class BicycleAnalysis(object):
         # lists declarations
         #--------------------------------------------------------------------------------#
 
+        list_test_cols = self.df_test_raw.columns.values.tolist()
+
         #--------------------------------------------------------------------------------#
         # variables declarations
         #--------------------------------------------------------------------------------#
 
-        string_status_templ = 'Exploring {0} data set.\n'
+        string_status_templ = 'Comparing train and test data sets.\n'
 
         ###############################################
         ###############################################
@@ -322,70 +313,67 @@ class BicycleAnalysis(object):
         ###############################################
         ###############################################
 
-        print(string_status_templ.format(string_test_train))
-
-        if m_string_flag == 'basic':
-            print(df_data.info(verbose = True))
-            print(df_data.head(3))
+        print(string_status_templ)
 
         #--------------------------------------------------------------------------#
-        # loop through the columns and plot
+        # loop through analyses
         #--------------------------------------------------------------------------#
 
-        if m_string_flag == 'categorical_columns':
-            for string_column in df_data.columns:
-                if df_data[string_column].dtype == 'object':
-                    list_y_values = list()
-                    list_x_values = list(df_data[string_column].unique())
-                    for string_value in list_x_values:
-                        array_x_bool = df_data[string_column] == string_value
-                        list_y_values.append(array_x_bool.sum())
-                    series_values = pandas.Series(data = list_y_values, index = list_x_values)
-                    series_values = series_values.sort_values(ascending = False)
-                    int_max = 10
-                    fig, ax = pyplot.subplots()
-                    ax.bar(
-                        x = series_values.index.values.tolist()[:int_max],
-                        height  = series_values[:int_max].values)
-                    ax.tick_params(axis = 'x', rotation = 35)
-                    ax.set_ylabel('Count')
-                    ax.set_title(string_column)
-                    pyplot.show()
-        
-        #--------------------------------------------------------------------------#
-        # look at the distribution of the prediction column
-        #--------------------------------------------------------------------------#
+        for string_analysis in m_list_flags:
+            # categorical analysis        
+            if string_analysis == 'categorical_columns':
+                for string_column in list_test_cols:
+                    if self.df_test_raw[string_column].dtype == 'object' and \
+                        self.df_train_raw[string_column].dtype == 'object':
+                        # get plot values
+                        series_test = self._ctt_calc_cat_values(
+                            self.df_test_raw[string_column])
+                        series_train = self._ctt_calc_cat_values(
+                            self.df_train_raw[string_column])
+                        
+                        # create figure and axes
+                        int_max = 10
+                        fig, axes = pyplot.subplots(1, 2)
+                        fig.suptitle(string_column)
+                        
+                        # plot train / test data
+                        axes[0] = self._ctt_plot_train_test(axes[0], series_train,
+                            int_max, 'Train')
+                        axes[1] = self._ctt_plot_train_test(axes[1], series_test,
+                            int_max, 'Test')
 
-        if m_string_flag == 'prediction_column':
-            list_y_values = list()
-            list_x_values = list(df_data['BikeBuyer'].unique())
-            for string_value in list_x_values:
-                array_x_bool = df_data['BikeBuyer'] == string_value
-                list_y_values.append(array_x_bool.sum())
-            series_values = pandas.Series(data = list_y_values, index = list_x_values)
-            series_values = series_values.sort_values(ascending = False)
-            fig, ax = pyplot.subplots()
-            ax.bar(
-                x = series_values.index.values.tolist(),
-                height  = series_values.values)
-            ax.set_ylabel('Count')
-            ax.set_xticks([0, 1])
-            ax.set_title('BikeBuyer Yes (1) or No (0)')
-            pyplot.show()
+                        # show plots
+                        pyplot.show()
+            
+            # predicted column
+            if string_analysis == 'prediction_column':
+                # get train / test values
+                string_bb_column = 'BikeBuyer'
+                series_bb_train = self._ctt_calc_cat_values(
+                    self.df_train_raw[string_bb_column])
 
+                # plot predicted column
+                fig, ax = pyplot.subplots()
+                ax = self._ctt_plot_train_test(ax, series_bb_train,
+                    2, 'Train')
+                fig.suptitle('BikeBuyer Yes (1) or No (0)')
+                
+                # show plots
+                pyplot.show()
+    
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
-        return 
+        return
 
-    def compare_train_test(self):
+    def basic_exploration(self):
         '''
         this method compares the common columns of the train and test sets
 
         Requirements:
         package pandas
-        package matplot lib
+        package matplotlib.pyplot
 
         Inputs:
         None
@@ -426,48 +414,118 @@ class BicycleAnalysis(object):
         ###############################################
         ###############################################
         #
-        # loop through columns and build graphs
-        #
-        ###############################################
-        ###############################################
-
-        for string_col in list_common_cols:
-            # test of the column is an object -> numpy.dtype('O')
-            if self.df_test_raw[string_col].dtype == numpy.dtype('O'):
-                pass
-            # test of column is a type of integer
-            elif 'int' in str(self.df_test_raw[string_col].dtype):
-                pass
-            else:
-                pass
-
-        #--------------------------------------------------------------------------#
-        # start loop through
-        #--------------------------------------------------------------------------#
-
-        ###############################################
-        ###############################################
-        #
-        # sectional comment
+        # start
         #
         ###############################################
         ###############################################
 
         #--------------------------------------------------------------------------#
-        # variable / object cleanup
+        # dataframe info
         #--------------------------------------------------------------------------#
+
+        print('Training dataset info')
+        self.df_train_raw[list_common_cols].info()
+
+        print('\nTest dataset info')
+        self.df_test_raw[list_common_cols].info()
+
+        #--------------------------------------------------------------------------#
+        # first three records of train and test set
+        #--------------------------------------------------------------------------#
+
+        print('\nFirst three records of training data')
+        print(self.df_train_raw[list_common_cols].head(3))
+
+        print('\nFirst three records of test data')
+        print(self.df_test_raw[list_common_cols].head(3))
 
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
-        return    
-        pass
+        return
     
     #--------------------------------------------------------------------------#
     # supportive methods
     #--------------------------------------------------------------------------#
 
+    def _ctt_calc_cat_values(self, m_series):
+        '''
+        calculates the categorical values in each series
+
+        Requirements:
+        package pandas
+
+        Inputs:
+        m_series
+        Type: pandas.Series
+        Desc: categorical values
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: pandas.Series
+        Desc: values by category in descending order
+        '''
+        
+        # set-up to count categorical values
+        list_y_values = list()
+        list_x_values = m_series.unique().tolist()
+        
+        # loop through x-values
+        for string_value in list_x_values:
+            array_x_bool = m_series == string_value
+            list_y_values.append(array_x_bool.sum())
+        
+        # create series
+        series_values = pandas.Series(data = list_y_values, index = list_x_values)
+        
+        return series_values.sort_values(ascending = False)
+    
+    def _ctt_plot_train_test(self, m_plot, m_series_data, m_int_max_cat = 10,
+        m_string_data = 'Train'):
+        '''
+        plot train / test values
+
+        Requirements:
+        package matplotlib.pyplot
+        package pandas
+
+        Inputs:
+        m_plot
+        Type: matplotlib.pyplot.axes
+        Desc: plot to plot data onto
+
+        m_series_data
+        Type: pandas.Series
+        Desc: values and categories to plot
+
+        m_int_max_cat
+        Type: integer
+        Desc: max amount of categories to plot
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: matplotlib.pyplot.axes
+        Desc: plot of train or test data
+        '''
+        
+        # plot the data
+        m_plot.bar(
+            x = m_series_data.index.values.tolist()[:m_int_max_cat],
+            height  = m_series_data[:m_int_max_cat].values)
+        m_plot.tick_params(axis = 'x', rotation = 35)
+        m_plot.set_ylabel('Count')
+        m_plot.set_title(m_string_data)
+        
+        return m_plot
+    
+    
     def def_Methods(self, list_cluster_results, array_sparse_matrix):
         '''
         below is an example of a good method comment
