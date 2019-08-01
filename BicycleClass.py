@@ -12,6 +12,7 @@
 from time import time
 from matplotlib import pyplot
 from collections import Counter
+from sklearn.preprocessing import OneHotEncoder
 import pandas
 import numpy
 import os
@@ -503,7 +504,25 @@ class BicycleAnalysis(object):
         df_prep = m_df[list_common_cols]
         if string_bb_col in list_common_cols:
             series_bb = df_prep[string_bb_col]
-            df_prep = df_prep.drop(string_bb_col)
+            df_prep = df_prep.drop(labels = string_bb_col, axis = 1)
+        else:
+            series_bb = None
+        
+        #--------------------------------------------------------------------------#
+        # one-hot encode categorical columns
+        #--------------------------------------------------------------------------#
+
+        list_df_ohe = list()
+        dict_col_info = dict()
+        for string_col in list_common_cols:
+            if df_prep[string_col].dtype == 'object':
+                ohe = OneHotEncoder(sparse = False)
+                array_ohe = ohe.fit_transform(df_prep[string_col])
+                list_df_ohe.append(
+                    pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
+                )
+                df_prep = df_prep.drop(labels = string_col, axis = 1)
+                dict_col_info[string_col] = ohe.get_feature_names()
 
         ###############################################
         ###############################################
