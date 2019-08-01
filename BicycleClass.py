@@ -262,7 +262,7 @@ class BicycleAnalysis(object):
 
     def compare_train_test(self, m_list_flags = ['categorical_columns']):
         '''
-        this method explores a pandas dataframe
+        plots both train and test data based on the flags passed
 
         Requirements:
         package pandas
@@ -273,7 +273,6 @@ class BicycleAnalysis(object):
         m_string_flags
         Type: list
         Desc: flag for the type of analysis to do
-            'basic' -> dataframe info and first three records
             'categorical_columns' -> bar charts of categorical columns
             'prediction_column' -> bar chart of prediction column
 
@@ -299,6 +298,7 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------------#
 
         list_test_cols = self.df_test_raw.columns.values.tolist()
+        df_train_filt = self.df_train_raw[list_test_cols]
 
         #--------------------------------------------------------------------------------#
         # variables declarations
@@ -325,17 +325,17 @@ class BicycleAnalysis(object):
             if string_analysis == 'categorical_columns':
                 for string_column in list_test_cols:
                     if self.df_test_raw[string_column].dtype == 'object' and \
-                        self.df_train_raw[string_column].dtype == 'object':
+                        df_train_filt[string_column].dtype == 'object':
                         # get plot values
                         series_test = self._ctt_calc_cat_values(
                             self.df_test_raw[string_column])
                         series_train = self._ctt_calc_cat_values(
-                            self.df_train_raw[string_column])
+                            df_train_filt[string_column])
                         
                         # create figure and axes
                         int_max = 10
                         fig, axes = pyplot.subplots(1, 2)
-                        fig.set_title(string_column)
+                        fig.suptitle(string_column)
                         
                         # plot train / test data
                         axes[0] = self._ctt_plot_train_test(axes[0], series_train,
@@ -351,7 +351,7 @@ class BicycleAnalysis(object):
                 # get train / test values
                 string_bb_column = 'BikeBuyer'
                 series_bb_train = self._ctt_calc_cat_values(
-                    self.df_train_raw[string_bb_column])
+                    df_train_filt[string_bb_column])
                 series_bb_test = self._ctt_calc_cat_values(
                     self.df_test_raw[string_bb_column])
 
@@ -487,7 +487,7 @@ class BicycleAnalysis(object):
         
         # loop through x-values
         for string_value in list_x_values:
-            array_x_bool = df_data[string_column] == string_value
+            array_x_bool = m_series == string_value
             list_y_values.append(array_x_bool.sum())
         
         # create series
