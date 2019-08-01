@@ -298,7 +298,6 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------------#
 
         list_test_cols = self.df_test_raw.columns.values.tolist()
-        df_train_filt = self.df_train_raw[list_test_cols]
 
         #--------------------------------------------------------------------------------#
         # variables declarations
@@ -325,12 +324,12 @@ class BicycleAnalysis(object):
             if string_analysis == 'categorical_columns':
                 for string_column in list_test_cols:
                     if self.df_test_raw[string_column].dtype == 'object' and \
-                        df_train_filt[string_column].dtype == 'object':
+                        self.df_train_raw[string_column].dtype == 'object':
                         # get plot values
                         series_test = self._ctt_calc_cat_values(
                             self.df_test_raw[string_column])
                         series_train = self._ctt_calc_cat_values(
-                            df_train_filt[string_column])
+                            self.df_train_raw[string_column])
                         
                         # create figure and axes
                         int_max = 10
@@ -351,17 +350,13 @@ class BicycleAnalysis(object):
                 # get train / test values
                 string_bb_column = 'BikeBuyer'
                 series_bb_train = self._ctt_calc_cat_values(
-                    df_train_filt[string_bb_column])
-                series_bb_test = self._ctt_calc_cat_values(
-                    self.df_test_raw[string_bb_column])
+                    self.df_train_raw[string_bb_column])
 
                 # plot predicted column
-                fig, axes = pyplot.subplots(1, 2)
-                axes[0] = self._ctt_plot_train_test(axes[0], series_bb_train,
+                fig, ax = pyplot.subplots()
+                ax = self._ctt_plot_train_test(ax, series_bb_train,
                     2, 'Train')
-                axes[1] = self._ctt_plot_train_test(axes[1], series_bb_test,
-                    2, 'Test')
-                fig.set_title('BikeBuyer Yes (1) or No (0)')
+                fig.suptitle('BikeBuyer Yes (1) or No (0)')
                 
                 # show plots
                 pyplot.show()
@@ -419,24 +414,30 @@ class BicycleAnalysis(object):
         ###############################################
         ###############################################
         #
-        # loop through columns and build graphs
+        # start
         #
         ###############################################
         ###############################################
 
-        for string_col in list_common_cols:
-            # test of the column is an object -> numpy.dtype('O')
-            if self.df_test_raw[string_col].dtype == numpy.dtype('O'):
-                pass
-            # test of column is a type of integer
-            elif 'int' in str(self.df_test_raw[string_col].dtype):
-                pass
-            else:
-                pass
+        #--------------------------------------------------------------------------#
+        # dataframe info
+        #--------------------------------------------------------------------------#
+
+        print('Training dataset info')
+        self.df_train_raw[list_common_cols].info()
+
+        print('\nTest dataset info')
+        self.df_test_raw[list_common_cols].info()
 
         #--------------------------------------------------------------------------#
-        # start loop through
+        # first three records of train and test set
         #--------------------------------------------------------------------------#
+
+        print('\nFirst three records of training data')
+        print(self.df_train_raw[list_common_cols].head(3))
+
+        print('\nFirst three records of test data')
+        print(self.df_test_raw[list_common_cols].head(3))
 
         ###############################################
         ###############################################
