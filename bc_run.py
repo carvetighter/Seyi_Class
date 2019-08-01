@@ -16,4 +16,3 @@ if __name__ == '__main__':
     bicycle_analysis.load_data()
     bicycle_analysis.explore()
     # bicycle_analysis.explore(False)
-

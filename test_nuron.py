@@ -13,6 +13,7 @@ from time import time
 from matplotlib import pyplot
 from collections import Counter
 import pandas
+import numpy
 import os
 
 import warnings
@@ -51,3 +52,12 @@ df_train_raw = pandas.read_csv(os.path.join(string_path, string_file_train_raw))
 
 df_test_raw.dtypes
 df_train_raw.dtypes
+
+set(df_test_raw.columns) & set(df_train_raw.columns)
+
+type(df_train_raw['TotalChildren'].dtype)
+df_train_raw['TotalChildren'].dtype == numpy.dtype('int64')
+str(df_train_raw['TotalChildren'].dtype)
+
+type(df_train_raw['MaritalStatus'].dtype)
+df_train_raw['MaritalStatus'].dtype == numpy.dtype('object')
