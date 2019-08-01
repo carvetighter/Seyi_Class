@@ -525,7 +525,6 @@ class BicycleAnalysis(object):
         
         return m_plot
     
-    
     def def_Methods(self, list_cluster_results, array_sparse_matrix):
         '''
         below is an example of a good method comment
