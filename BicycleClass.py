@@ -646,6 +646,33 @@ class BicycleAnalysis(object):
         
         return m_plot
     
+    def _cast_cols_to_object(self, m_df):
+        '''
+        this method automates the casting of some columns in the training and test sets
+        that is done in the notebook example
+
+        Requirements:
+        package pandas
+
+        Inputs:
+        m_df
+        Type: pandas.DataFrame
+        Desc: train or test data
+
+        Important Info:
+        1. assumption is columns are in DataFrame
+
+        Return:
+        None
+        Type: n/a
+        Desc: n/a
+        '''
+        
+        list_cols_to_cast = ['NumberChildrenAtHome', 'NumberCarsOwned', 'TotalChildren']
+        m_df[list_cols_to_cast] = m_df[list_cols_toc_cast].astype(str)
+        
+        return m_df
+    
     #--------------------------------------------------------------------------#
     # example
     #--------------------------------------------------------------------------#
