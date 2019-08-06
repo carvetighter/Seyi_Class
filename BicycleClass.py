@@ -12,6 +12,7 @@
 from time import time
 from matplotlib import pyplot
 from collections import Counter
+from sklearn.preprocessing import OneHotEncoder
 import pandas
 import numpy
 import os
@@ -367,7 +368,7 @@ class BicycleAnalysis(object):
 
         return
 
-    def basic_exploration(self):
+    def basic_exploration(self, m_bool_train = True):
         '''
         this method compares the common columns of the train and test sets
 
@@ -376,9 +377,9 @@ class BicycleAnalysis(object):
         package matplotlib.pyplot
 
         Inputs:
-        None
-        Type: n/a
-        Desc: n/a
+        m_bool_train
+        Type: boolean
+        Desc: flag to flip between training and test sets
 
         Important Info:
         None
@@ -393,6 +394,13 @@ class BicycleAnalysis(object):
         # objects declarations
         #--------------------------------------------------------------------------------#
 
+        if m_bool_train:
+            df_expl = self.df_train_raw
+            string_set = 'train'
+        else:
+            df_expl = self.df_test_raw
+            string_set = 'test'
+
         #--------------------------------------------------------------------------------#
         # time declarations
         #--------------------------------------------------------------------------------#
@@ -406,6 +414,10 @@ class BicycleAnalysis(object):
         list_common_cols = list(set_train_cols & set_test_cols)
         if 'BikeBuyer' in list_common_cols:
             list_common_cols.remove('BikeBuyer')
+            print('BikeBiyer column excluded\n')
+        
+        set_npdt_num = {numpy.dtype('int16'), numpy.dtype('int32'), numpy.dtype('int64'), 
+            numpy.dtype('float16'), numpy.dtype('float32'), numpy.dtype('float64')}
 
         #--------------------------------------------------------------------------------#
         # variables declarations
@@ -423,27 +435,132 @@ class BicycleAnalysis(object):
         # dataframe info
         #--------------------------------------------------------------------------#
 
-        print('Training dataset info')
-        self.df_train_raw[list_common_cols].info()
-
-        print('\nTest dataset info')
-        self.df_test_raw[list_common_cols].info()
+        print('{} dataset info'.format(string_set))
+        df_expl[list_common_cols].info()
 
         #--------------------------------------------------------------------------#
         # first three records of train and test set
         #--------------------------------------------------------------------------#
 
-        print('\nFirst three records of training data')
-        print(self.df_train_raw[list_common_cols].head(3))
+        print('\nFirst three records of {} data set'.format(string_set))
+        print(self.df_train_raw[list_common_cols].head(3), '\n')
 
-        print('\nFirst three records of test data')
-        print(self.df_test_raw[list_common_cols].head(3))
+        #--------------------------------------------------------------------------#
+        # loop through columns for column info
+        #--------------------------------------------------------------------------#
+
+        for string_col in list_common_cols:
+            np_dtype = df_expl[string_col].dtype
+            int_nulls = df_expl[string_col].isnull().sum()
+            if np_dtype == numpy.dtype(object):
+                var_vals = df_expl[string_col].unique().tolist()
+                string_vals = 'unique values are'
+
+            print('# of nulls in column:', int_nulls)
+            print(df_expl[string_col].describe())
+            if np_dtype == numpy.dtype(object):
+                print(string_vals, var_vals, '\n')
+            else:
+                print('\n')
+
 
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
         return
+    
+    def pre_process_data(self, m_df):
+        '''
+        this method pre-processes the data for modeling
+
+        Requirements:
+        package pandas
+
+        Inputs:
+        m_df
+        Type: pandas.DataFrame
+        Desc: data for either train or test to process
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: pandas.DataFrame
+        Desc: processed data for modeling
+        '''
+
+        #--------------------------------------------------------------------------------#
+        # objects declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # time declarations
+        #--------------------------------------------------------------------------------#
+
+        #--------------------------------------------------------------------------------#
+        # sequence declarations
+        #--------------------------------------------------------------------------------#
+
+        set_train_cols = set(self.df_train_raw.columns.values.tolist())
+        set_test_cols = set(self.df_test_raw.columns.values.tolist())
+        list_common_cols = list(set_train_cols & set_test_cols)
+
+        #--------------------------------------------------------------------------------#
+        # variables declarations
+        #--------------------------------------------------------------------------------#
+
+        string_bb_col = 'BikeBuyer'
+        
+        ###############################################
+        ###############################################
+        #
+        # Start
+        #
+        ###############################################
+        ###############################################
+
+        #--------------------------------------------------------------------------#
+        # set-up for processing
+        #--------------------------------------------------------------------------#
+
+        df_prep = m_df[list_common_cols]
+        if string_bb_col in list_common_cols:
+            series_bb = df_prep[string_bb_col]
+            df_prep = df_prep.drop(labels = string_bb_col, axis = 1)
+            list_common_cols.remove(string_bb_col)
+        else:
+            series_bb = pandas.Series([None for x in range(0, len(df_prep))])
+        
+        #--------------------------------------------------------------------------#
+        # one-hot encode categorical columns
+        #--------------------------------------------------------------------------#
+
+        list_ohe_cols = list()
+        for string_col in list_common_cols:
+            if df_prep[string_col].dtype == 'object':
+                list_ohe_cols.append(string_col)
+        
+        ohe = OneHotEncoder(sparse = False)
+        array_ohe = ohe.fit_transform(df_prep[list_ohe_cols])
+        
+        df_prep = df_prep.drop(labels = list_ohe_cols, axis = 1)
+        df_ohe = pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
+
+        #--------------------------------------------------------------------------#
+        # create return dataframe
+        #--------------------------------------------------------------------------#
+
+        df_return = pandas.concat([df_prep, df_ohe], axis = 1)
+        dict_bb = {string_bb_col:series_bb}
+        df_return = df_return.assign(**dict_bb)
+
+        #--------------------------------------------------------------------------#
+        # return value
+        #--------------------------------------------------------------------------#
+
+        return df_return
     
     #--------------------------------------------------------------------------#
     # supportive methods
@@ -519,7 +636,11 @@ class BicycleAnalysis(object):
         m_plot.bar(
             x = m_series_data.index.values.tolist()[:m_int_max_cat],
             height  = m_series_data[:m_int_max_cat].values)
-        m_plot.tick_params(axis = 'x', rotation = 35)
+        m_plot.tick_params(axis = 'x', rotation = 90)
+        if m_string_data == 'Test':
+            m_plot.tick_params(axis = 'y', right = True, left = False, 
+                labelright = True, labelleft = False, direction = 'out')
+            m_plot.yaxis.set_label_position('right')
         m_plot.set_ylabel('Count')
         m_plot.set_title(m_string_data)
         
