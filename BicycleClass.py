@@ -669,7 +669,7 @@ class BicycleAnalysis(object):
         '''
         
         list_cols_to_cast = ['NumberChildrenAtHome', 'NumberCarsOwned', 'TotalChildren']
-        m_df[list_cols_to_cast] = m_df[list_cols_toc_cast].astype(str)
+        m_df[list_cols_to_cast] = m_df[list_cols_to_cast].astype(str)
         
         return m_df
     
