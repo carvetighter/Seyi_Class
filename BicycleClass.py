@@ -529,47 +529,38 @@ class BicycleAnalysis(object):
         if string_bb_col in list_common_cols:
             series_bb = df_prep[string_bb_col]
             df_prep = df_prep.drop(labels = string_bb_col, axis = 1)
+            list_common_cols.remove(string_bb_col)
         else:
-            series_bb = None
+            series_bb = pandas.Series([None for x in range(0, len(df_prep))])
         
         #--------------------------------------------------------------------------#
         # one-hot encode categorical columns
         #--------------------------------------------------------------------------#
 
-        list_df_ohe = list()
-        dict_col_info = dict()
+        list_ohe_cols = list()
         for string_col in list_common_cols:
             if df_prep[string_col].dtype == 'object':
-                ohe = OneHotEncoder(sparse = False)
-                array_ohe = ohe.fit_transform(df_prep[string_col])
-                list_df_ohe.append(
-                    pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
-                )
-                df_prep = df_prep.drop(labels = string_col, axis = 1)
-                dict_col_info[string_col] = ohe.get_feature_names()
-
-        ###############################################
-        ###############################################
-        #
-        # sectional comment
-        #
-        ###############################################
-        ###############################################
+                list_ohe_cols.append(string_col)
+        
+        ohe = OneHotEncoder(sparse = False)
+        array_ohe = ohe.fit_transform(df_prep[list_ohe_cols])
+        
+        df_prep = df_prep.drop(labels = list_ohe_cols, axis = 1)
+        df_ohe = pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
 
         #--------------------------------------------------------------------------#
-        # variable / object cleanup
+        # create return dataframe
         #--------------------------------------------------------------------------#
+
+        df_return = pandas.concat([df_prep, df_ohe], axis = 1)
+        dict_bb = {string_bb_col:series_bb}
+        df_return = df_return.assign(**dict_bb)
 
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
-        return    
-
-        '''
-        '''
-
-        return
+        return df_return
     
     #--------------------------------------------------------------------------#
     # supportive methods
