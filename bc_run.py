@@ -24,3 +24,4 @@ if __name__ == '__main__':
     df_test_ohe = bicycle_analysis.pre_process_data(df_test_ohe)
     df_train_ohe = bicycle_analysis.pre_process_data(df_train_ohe)
     
+    print(bicycle_analysis.generic_models(df_train_ohe))

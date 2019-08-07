@@ -13,6 +13,31 @@ from time import time
 from matplotlib import pyplot
 from collections import Counter
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.svm import NuSVC
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import ExtraTreeClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import StratifiedShuffleSplit
+
 import pandas
 import numpy
 import os
@@ -561,6 +586,109 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------#
 
         return df_return
+    
+    def generic_models(self, m_df_train, m_dict_models = None):
+        '''
+        this method tests generic models based on the f1 score will a prioritized list of
+        models by f1 score
+
+        Requirements:
+        package pandas
+        package sklearn
+
+        Inputs:
+        m_df_train
+        Type: pandas.DataFrame
+        Desc: train data
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: dictionary
+        Desc: the average of the cross-validation results
+            dict['model_name'] = {
+                'precision'; float
+                'recall'; float
+                'f1'; float
+                'support'; float
+                'accuracy'; float
+            }
+        '''
+
+        # model dictionary set-up
+        if m_dict_models:
+            dict_models = m_dict_models
+        else:
+            dict_models = {
+                'AdaBoost':AdaBoostClassifier(),
+                'GradBoost':GradientBoostingClassifier(),
+                'ExtraTrees':ExtraTreesClassifier(),
+                'RandForest':RandomForestClassifier(),
+                'LogReg':LogisticRegression(),
+                'PassAgg':PassiveAggressiveClassifier(),
+                'Perc':Perceptron(),
+                'Ridge':RidgeClassifier(),
+                'SGD':SGDClassifier(),
+                'BernNB':BernoulliNB(),
+                'GaussNB':GaussianNB(),
+                'KnnC':KNeighborsClassifier(),
+                'LinSvc':LinearSVC(),
+                'NuSvc':NuSVC(),
+                'Svc':SVC(),
+                'DecTree':DecisionTreeClassifier(),
+                'ExtraTC':ExtraTreeClassifier()
+            }
+        
+        # from for generic modeling
+        dict_return = dict()
+        df_train = m_df_train.copy()
+        series_y_true = df_train['BikeBuyer']
+        df_train = df_train.drop(['BikeBuyer'], axis = 1)
+
+        # loop through generic models
+        for string_model, model_classifier in dict_models.items():
+            print('starting %s' %string_model)
+
+            # cross-validation
+            cv_sss = StratifiedShuffleSplit(n_splits = 5, test_size=0.15)
+            
+            # loop through train, test splits to fit and predict
+            list_cv_results = list()
+            for array_train_idx, array_test_idx in cv_sss.split(df_train, series_y_true):
+                model_classifier.fit(
+                    df_train.loc[array_train_idx], series_y_true.loc[array_train_idx])
+                array_y_pred = model_classifier.predict(df_train.loc[array_test_idx])
+                tup_prfs = precision_recall_fscore_support(
+                    y_true = series_y_true.loc[array_test_idx].values,
+                    y_pred = array_y_pred,
+                    average = 'weighted')
+                float_acc = accuracy_score(
+                    y_true = series_y_true.loc[array_test_idx].values,
+                    y_pred = array_y_pred)
+                list_record = list(tup_prfs)
+                list_record.append(float_acc)
+                list_cv_results.append(list_record)
+            
+            # dataframe of cv results
+            df_cv_results = pandas.DataFrame(
+                data = list_cv_results,
+                columns = ['precision', 'recall', 'f1', 'support', 'accuracy'])
+
+            # average the results ov the cross-validation
+            dict_return[string_model] = {
+                'precision':df_cv_results['precision'].mean(),
+                'recall':df_cv_results['recall'].mean(),
+                'f1':df_cv_results['f1'].mean(),
+                'support':df_cv_results['support'].mean(),
+                'accuracy':df_cv_results['accuracy'].mean()}
+        
+        # dataframe of results
+        df_results = pandas.DataFrame(dict_return)
+        df_results = df_results.transpose()
+        
+        return df_results.sort_values(by = 'f1', ascending = False)
     
     #--------------------------------------------------------------------------#
     # supportive methods
