@@ -36,7 +36,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
-from sklearn.model_selection import StratifiedShuffleSplit
 
 import pandas
 import numpy
@@ -102,6 +101,7 @@ class BicycleAnalysis(object):
         self.string_file_test = 'test_technidus_clf.csv'
         self.string_file_train = 'train_technidus_clf.csv'
         self.set_source_files = set([self.string_file_test, self.string_file_train])
+        self.string_y_col = 'BikeBuyer'
 
         #--------------------------------------------------------------------------#
         # data containers
@@ -109,6 +109,13 @@ class BicycleAnalysis(object):
 
         self.df_test_raw = None
         self.df_train_raw = None
+        self.df_test_common = None
+        self.df_train_common = None
+        self.df_train_ohe = None
+        self.df_test_ohe = None
+        self.df_train_y = None
+        self.df_test_y = None
+        self.list_common_cols = None
 
     #--------------------------------------------------------------------------#
     # main method
