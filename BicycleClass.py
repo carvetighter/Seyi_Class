@@ -9,7 +9,6 @@
 ###############################################
 ###############################################
 
-from time import time
 from matplotlib import pyplot
 from collections import Counter
 from sklearn.preprocessing import OneHotEncoder
@@ -37,6 +36,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import SelectPercentile
 
 import pandas
 import numpy
@@ -117,7 +118,18 @@ class BicycleAnalysis(object):
         self.df_test_ohe = None
         self.series_train_y = None
         self.series_test_y = None
+
+        #--------------------------------------------------------------------------#
+        # others
+        #--------------------------------------------------------------------------#
+
         self.list_common_cols = None
+        self.dict_feat_imp_flags = {
+            'all':False,
+            'anova':False,
+            'chi':False,
+            'heatmap':False,
+            'feat_imp':False}
 
     #--------------------------------------------------------------------------#
     # main method
@@ -572,11 +584,11 @@ class BicycleAnalysis(object):
         package pandas
 
         Inputs:
-        m_df
+        m_df_train
         Type: pandas.DataFrame
         Desc: data to use to calculate feature importance
 
-        m_series
+        m_series_y
         Type: pandas.Series
         Desc: contains the class of the prediction column
 
@@ -587,7 +599,7 @@ class BicycleAnalysis(object):
             'anova' -> analysis of variance
             'chi' -> chi squared analysis
             'heatmap' -> head map of correlation
-            'feat_imp' -> feature importance of a model; in this case decision tree
+            'feat_imp' -> feature importance of a model; in this case random forest
 
         Important Info:
         1. must have a classifaction / result to compare to
@@ -597,7 +609,30 @@ class BicycleAnalysis(object):
         Type: ??
         Desc: ??
         '''
-        print(args)
+
+        # set the arguements
+        for string_arg in args:
+            if string_arg in self.dict_feat_imp_flags.keys():
+                self.dict_feat_imp_flags[string_arg] = True
+        
+        # test for all analysees
+        bool_all = False
+        if self.dict_feat_imp_flags.get('all', False):
+            bool_all = True
+        
+        if bool_all or self.dict_feat_imp_flags.get('anova', False):
+            selector = SelectPercentile(f_classif, percentile = 100)
+            selector.fit(m_df_train.values, m_series_y.values)
+
+            dict_anova_data = {
+                'f_value':selector.scores_,
+                'feature':m_df_train.columns.values}
+            df_anova = pandas.DataFrame(data = dict_anova_data)
+        else:
+            df_anova = None
+        
+        print(df_anova.sort_values(by = 'f_value', ascending = False)[:20])
+
         return
     
     def generic_models(self, m_df_train, m_dict_models = None):
