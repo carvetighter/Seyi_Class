@@ -17,7 +17,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
@@ -26,7 +26,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import RadiusNeighborsClassifier
+# from sklearn.neighbors import RadiusNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.svm import NuSVC
 from sklearn.svm import SVC
@@ -40,6 +40,7 @@ from sklearn.metrics import precision_recall_fscore_support
 import pandas
 import numpy
 import os
+import seaborn
 
 import warnings
 warnings.simplefilter('ignore')
@@ -269,7 +270,7 @@ class BicycleAnalysis(object):
             self.df_train_raw = pandas.read_csv(
                 os.path.join(self.string_data_path, self.string_file_train))
             self.series_test_y = self.df_test_raw[self.string_y_col]
-            self.sieres_train_y = self.df_train_raw[self.string_y_col]
+            self.series_train_y = self.df_train_raw[self.string_y_col]
             self.df_test_raw = self.df_test_raw.drop(self.string_y_col, axis = 1)
             self.df_train_raw = self.df_train_raw.drop(self.string_y_col, axis = 1)
 
@@ -334,8 +335,6 @@ class BicycleAnalysis(object):
         # lists declarations
         #--------------------------------------------------------------------------------#
 
-        list_test_cols = self.df_test_raw.columns.values.tolist()
-
         #--------------------------------------------------------------------------------#
         # variables declarations
         #--------------------------------------------------------------------------------#
@@ -359,7 +358,7 @@ class BicycleAnalysis(object):
         for string_analysis in m_list_flags:
             # categorical analysis        
             if string_analysis == 'categorical_columns':
-                for string_column in list_test_cols:
+                for string_column in self.list_common_cols:
                     if self.df_test_raw[string_column].dtype == 'object' and \
                         self.df_train_raw[string_column].dtype == 'object':
                         # get plot values
@@ -385,9 +384,7 @@ class BicycleAnalysis(object):
             # predicted column
             if string_analysis == 'prediction_column':
                 # get train / test values
-                string_bb_column = 'BikeBuyer'
-                series_bb_train = self._ctt_calc_cat_values(
-                    self.df_train_raw[string_bb_column])
+                series_bb_train = self._ctt_calc_cat_values(self.series_train_y)
 
                 # plot predicted column
                 fig, ax = pyplot.subplots()
@@ -431,10 +428,10 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------------#
 
         if m_bool_train:
-            df_expl = self.df_train_raw
+            df_expl = self.df_train_common
             string_set = 'train'
         else:
-            df_expl = self.df_test_raw
+            df_expl = self.df_test_common
             string_set = 'test'
 
         #--------------------------------------------------------------------------------#
@@ -444,13 +441,6 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------------#
         # lists declarations
         #--------------------------------------------------------------------------------#
-
-        set_train_cols = set(self.df_train_raw.columns)
-        set_test_cols = set(self.df_test_raw.columns)
-        list_common_cols = list(set_train_cols & set_test_cols)
-        if 'BikeBuyer' in list_common_cols:
-            list_common_cols.remove('BikeBuyer')
-            print('BikeBiyer column excluded\n')
         
         set_npdt_num = {numpy.dtype('int16'), numpy.dtype('int32'), numpy.dtype('int64'), 
             numpy.dtype('float16'), numpy.dtype('float32'), numpy.dtype('float64')}
@@ -472,20 +462,20 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------#
 
         print('{} dataset info'.format(string_set))
-        df_expl[list_common_cols].info()
+        df_expl.info()
 
         #--------------------------------------------------------------------------#
         # first three records of train and test set
         #--------------------------------------------------------------------------#
 
         print('\nFirst three records of {} data set'.format(string_set))
-        print(self.df_train_raw[list_common_cols].head(3), '\n')
+        print(df_expl.head(3), '\n')
 
         #--------------------------------------------------------------------------#
         # loop through columns for column info
         #--------------------------------------------------------------------------#
 
-        for string_col in list_common_cols:
+        for string_col in self.list_common_cols:
             np_dtype = df_expl[string_col].dtype
             int_nulls = df_expl[string_col].isnull().sum()
             if np_dtype == numpy.dtype(object):
@@ -597,6 +587,33 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------#
 
         return df_return
+    
+    def feature_importance(self, m_df, m_series_y, *args):
+        '''
+        calculates the feature importance using several different methods
+
+        Requirements:
+        package pandas
+
+        Inputs:
+        m_df
+        Type: pandas.DataFrame
+        Desc: data to use to calculate feature importance
+
+        m_series
+        Type: pandas.Series
+        Desc: 
+
+        Important Info:
+        1. must have a classifaction / result to compare to
+
+        Return:
+        ??
+        Type: ??
+        Desc: ??
+        '''
+        
+        return
     
     def generic_models(self, m_df_train, m_dict_models = None):
         '''
