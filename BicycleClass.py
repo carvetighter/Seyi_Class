@@ -36,6 +36,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import StratifiedShuffleSplit
 
 import pandas
 import numpy
@@ -529,15 +530,9 @@ class BicycleAnalysis(object):
         # sequence declarations
         #--------------------------------------------------------------------------------#
 
-        set_train_cols = set(self.df_train_raw.columns.values.tolist())
-        set_test_cols = set(self.df_test_raw.columns.values.tolist())
-        list_common_cols = list(set_train_cols & set_test_cols)
-
         #--------------------------------------------------------------------------------#
         # variables declarations
         #--------------------------------------------------------------------------------#
-
-        string_bb_col = 'BikeBuyer'
         
         ###############################################
         ###############################################
@@ -546,25 +541,14 @@ class BicycleAnalysis(object):
         #
         ###############################################
         ###############################################
-
-        #--------------------------------------------------------------------------#
-        # set-up for processing
-        #--------------------------------------------------------------------------#
-
-        df_prep = m_df[list_common_cols]
-        if string_bb_col in list_common_cols:
-            series_bb = df_prep[string_bb_col]
-            df_prep = df_prep.drop(labels = string_bb_col, axis = 1)
-            list_common_cols.remove(string_bb_col)
-        else:
-            series_bb = pandas.Series([None for x in range(0, len(df_prep))])
         
         #--------------------------------------------------------------------------#
         # one-hot encode categorical columns
         #--------------------------------------------------------------------------#
 
         list_ohe_cols = list()
-        for string_col in list_common_cols:
+        df_prep = m_df.copy()
+        for string_col in self.list_common_cols:
             if df_prep[string_col].dtype == 'object':
                 list_ohe_cols.append(string_col)
         
@@ -575,20 +559,12 @@ class BicycleAnalysis(object):
         df_ohe = pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
 
         #--------------------------------------------------------------------------#
-        # create return dataframe
-        #--------------------------------------------------------------------------#
-
-        df_return = pandas.concat([df_prep, df_ohe], axis = 1)
-        dict_bb = {string_bb_col:series_bb}
-        df_return = df_return.assign(**dict_bb)
-
-        #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
-        return df_return
+        return pandas.concat([df_prep, df_ohe], axis = 1)
     
-    def feature_importance(self, m_df, m_series_y, *args):
+    def feature_importance(self, *args, m_df_train, m_series_y):
         '''
         calculates the feature importance using several different methods
 
@@ -602,7 +578,16 @@ class BicycleAnalysis(object):
 
         m_series
         Type: pandas.Series
-        Desc: 
+        Desc: contains the class of the prediction column
+
+        *args
+        Type: list
+        Desc: flags passed as strings and they could be one or all of the following
+            'all' -> do all the exploration
+            'anova' -> analysis of variance
+            'chi' -> chi squared analysis
+            'heatmap' -> head map of correlation
+            'feat_imp' -> feature importance of a model; in this case decision tree
 
         Important Info:
         1. must have a classifaction / result to compare to
@@ -612,7 +597,7 @@ class BicycleAnalysis(object):
         Type: ??
         Desc: ??
         '''
-        
+        print(args)
         return
     
     def generic_models(self, m_df_train, m_dict_models = None):
@@ -669,13 +654,8 @@ class BicycleAnalysis(object):
                 'ExtraTC':ExtraTreeClassifier()
             }
         
-        # from for generic modeling
-        dict_return = dict()
-        df_train = m_df_train.copy()
-        series_y_true = df_train['BikeBuyer']
-        df_train = df_train.drop(['BikeBuyer'], axis = 1)
-
         # loop through generic models
+        dict_return = dict()
         for string_model, model_classifier in dict_models.items():
             print('starting %s' %string_model)
 
@@ -684,32 +664,32 @@ class BicycleAnalysis(object):
             
             # loop through train, test splits to fit and predict
             list_cv_results = list()
-            for array_train_idx, array_test_idx in cv_sss.split(df_train, series_y_true):
+            for array_train_idx, array_test_idx in cv_sss.split(
+                m_df_train, self.series_train_y):
                 model_classifier.fit(
-                    df_train.loc[array_train_idx], series_y_true.loc[array_train_idx])
-                array_y_pred = model_classifier.predict(df_train.loc[array_test_idx])
+                    m_df_train.loc[array_train_idx], self.series_train_y.loc[array_train_idx])
+                array_y_pred = model_classifier.predict(m_df_train.loc[array_test_idx])
                 tup_prfs = precision_recall_fscore_support(
-                    y_true = series_y_true.loc[array_test_idx].values,
+                    y_true = self.series_train_y.loc[array_test_idx].values,
                     y_pred = array_y_pred,
                     average = 'weighted')
                 float_acc = accuracy_score(
-                    y_true = series_y_true.loc[array_test_idx].values,
+                    y_true = self.series_train_y.loc[array_test_idx].values,
                     y_pred = array_y_pred)
-                list_record = list(tup_prfs)
+                list_record = list(tup_prfs[:-1])
                 list_record.append(float_acc)
                 list_cv_results.append(list_record)
             
             # dataframe of cv results
             df_cv_results = pandas.DataFrame(
                 data = list_cv_results,
-                columns = ['precision', 'recall', 'f1', 'support', 'accuracy'])
+                columns = ['precision', 'recall', 'f1', 'accuracy'])
 
             # average the results ov the cross-validation
             dict_return[string_model] = {
                 'precision':df_cv_results['precision'].mean(),
                 'recall':df_cv_results['recall'].mean(),
                 'f1':df_cv_results['f1'].mean(),
-                'support':df_cv_results['support'].mean(),
                 'accuracy':df_cv_results['accuracy'].mean()}
         
         # dataframe of results
