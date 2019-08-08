@@ -113,8 +113,8 @@ class BicycleAnalysis(object):
         self.df_train_common = None
         self.df_train_ohe = None
         self.df_test_ohe = None
-        self.df_train_y = None
-        self.df_test_y = None
+        self.series_train_y = None
+        self.series_test_y = None
         self.list_common_cols = None
 
     #--------------------------------------------------------------------------#
@@ -268,6 +268,10 @@ class BicycleAnalysis(object):
                 os.path.join(self.string_data_path, self.string_file_test))
             self.df_train_raw = pandas.read_csv(
                 os.path.join(self.string_data_path, self.string_file_train))
+            self.series_test_y = self.df_test_raw[self.string_y_col]
+            self.sieres_train_y = self.df_train_raw[self.string_y_col]
+            self.df_test_raw = self.df_test_raw.drop(self.string_y_col, axis = 1)
+            self.df_train_raw = self.df_train_raw.drop(self.string_y_col, axis = 1)
 
         ###############################################
         ###############################################
@@ -281,11 +285,11 @@ class BicycleAnalysis(object):
             # find the common columns to both sets
             set_train_cols = set(self.df_train_raw.columns)
             set_test_cols = set(self.df_test_raw.columns)
-            list_common_cols = list(set_train_cols & set_test_cols)
+            self.list_common_cols = list(set_train_cols & set_test_cols)
             
             # filter dataframes
-            self.df_test_raw = self.df_test_raw[list_common_cols]
-            self.df_train_raw = self.df_train_raw[list_common_cols]
+            self.df_test_common = self.df_test_raw[self.list_common_cols]
+            self.df_train_common = self.df_train_raw[self.list_common_cols]
         
         #--------------------------------------------------------------------------#
         # return value
