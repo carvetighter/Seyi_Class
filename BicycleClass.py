@@ -37,6 +37,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import chi2
 from sklearn.feature_selection import SelectPercentile
 
 import pandas
@@ -566,9 +567,24 @@ class BicycleAnalysis(object):
         
         ohe = OneHotEncoder(sparse = False)
         array_ohe = ohe.fit_transform(df_prep[list_ohe_cols])
+
+        #--------------------------------------------------------------------------#
+        # create column names
+        #--------------------------------------------------------------------------#
+
+        list_ohe_col_names = list()
+        for int_idx in range(0, len(list_ohe_cols)):
+            string_col = list_ohe_cols[int_idx]
+            array_cats = ohe.categories_[int_idx]
+            for int_cat_idx in range(0, len(array_cats)):
+                list_ohe_col_names.append(string_col + '_' + array_cats[int_cat_idx])
+        
+        #--------------------------------------------------------------------------#
+        # create dataframes to concat
+        #--------------------------------------------------------------------------#
         
         df_prep = df_prep.drop(labels = list_ohe_cols, axis = 1)
-        df_ohe = pandas.DataFrame(array_ohe, columns = ohe.get_feature_names())
+        df_ohe = pandas.DataFrame(array_ohe, columns = list_ohe_col_names)
 
         #--------------------------------------------------------------------------#
         # return value
@@ -620,10 +636,9 @@ class BicycleAnalysis(object):
         if self.dict_feat_imp_flags.get('all', False):
             bool_all = True
         
+        # anova analysis
         if bool_all or self.dict_feat_imp_flags.get('anova', False):
-            selector = SelectPercentile(f_classif, percentile = 100)
-            selector.fit(m_df_train.values, m_series_y.values)
-
+            selector = self._fi_selector(m_df_train.values, m_series_y.values, f_classif)
             dict_anova_data = {
                 'f_value':selector.scores_,
                 'feature':m_df_train.columns.values}
@@ -631,7 +646,18 @@ class BicycleAnalysis(object):
         else:
             df_anova = None
         
-        print(df_anova.sort_values(by = 'f_value', ascending = False)[:20])
+        # chi-squared analyis
+        if bool_all or self.dict_feat_imp_flags.get('chi', False):
+            selector = self._fi_selector(m_df_train.values, m_series_y.values, chi2)
+            dict_chi2_data = {
+                'chi2':selector.scores_,
+                'feature':m_df_train.columns.values}
+            df_chi2 = pandas.DataFrame(data = dict_chi2_data)
+        else:
+            df_chi2 = None
+        
+        print(df_anova.sort_values(by = 'f_value', ascending = False)[:20], '\n')
+        print(df_chi2.sort_values(by = 'chi2', ascending = False)[:20])
 
         return
     
@@ -843,6 +869,40 @@ class BicycleAnalysis(object):
         m_df[list_cols_to_cast] = m_df[list_cols_to_cast].astype(str)
         
         return m_df
+    
+    def _fi_selector(self, m_fi_x, m_fi_y, m_fi_fs):
+        '''
+        generates the selector for the feature importance
+
+        Requirements:
+        package pandas
+        package numpy
+        package sklearn.feature_selection
+
+        Inputs:
+        m_fi_x
+        Type: pandas.DataFrame or numpy.array
+        Desc: data to fit selector on
+
+        m_fi_y
+        Type: pandas.Series or numpy.array
+        Desc: y-values to fit selector on
+
+        m_fi_fs
+        Type: sklearn.feature_selecion.<function>
+        Desc: function to choose the feature selector
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: sklearn.feature_selection.Selector
+        Desc: fitted selector
+        '''
+        fi_selector = SelectPercentile(m_fi_fs, percentile = 100)
+        fi_selector.fit(m_fi_x, m_fi_y)
+        return fi_selector
     
     #--------------------------------------------------------------------------#
     # example
