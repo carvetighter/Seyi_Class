@@ -870,7 +870,7 @@ class BicycleAnalysis(object):
         
         return m_df
     
-    def _fi_selector(self, m_fi_x, m_fi_y, m_fi_fs):
+    def _fi_selector(self, m_fi_x, m_fi_y, m_fi_fs):f
         '''
         generates the selector for the feature importance
 
