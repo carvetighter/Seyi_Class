@@ -561,6 +561,8 @@ class BicycleAnalysis(object):
 
         list_ohe_cols = list()
         df_prep = m_df.copy()
+        df_prep = self._cast_cols_to_object(df_prep)
+
         for string_col in self.list_common_cols:
             if df_prep[string_col].dtype == 'object':
                 list_ohe_cols.append(string_col)
@@ -667,9 +669,12 @@ class BicycleAnalysis(object):
             df_corr = m_df_train.corr()
             idx_top_corr_feat = df_corr.index
             heatmap = seaborn.heatmap(
-                m_df_train[idx_top_corr_feat].corr(), anot = True, cmap = 'RdYlGn')
+                m_df_train[idx_top_corr_feat].corr(), annot = True, cmap = 'RdYlGn')
         else:
             heatmap = None
+            
+        # debug code
+        print(df_anova[:20])
 
         return df_anova, df_chi2, df_fi, heatmap
     
