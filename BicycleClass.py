@@ -621,9 +621,14 @@ class BicycleAnalysis(object):
         1. must have a classifaction / result to compare to
 
         Return:
-        ??
-        Type: ??
-        Desc: ??
+        object
+        Type: tuple
+        Desc: the result of the feature analysis bases on the inputs; each DataFrame
+            could be None if not executed
+            tuple[0] -> df; anova
+            tuple[1] -> df; chi-squared 
+            tuple[2] -> df; feature imporance based on random forest
+            tuple[03] -> df; correlation heatmap from seaborn
         '''
 
         # set the arguements
@@ -639,28 +644,34 @@ class BicycleAnalysis(object):
         # anova analysis
         if bool_all or self.dict_feat_imp_flags.get('anova', False):
             df_anova = self._fi_selector(m_df_train, m_series_y, 'anova')
+            df_anova['cum_perc'].plot.line()
         else:
             df_anova = None
         
         # chi-squared analyis
         if bool_all or self.dict_feat_imp_flags.get('chi', False):
             df_chi2 = self._fi_selector(m_df_train, m_series_y, 'chi')
+            df_chi2['cum_perc'].plot.line()
         else:
             df_chi2 = None
         
         # feature importance by model
         if bool_all or self.dict_feat_imp_flags.get('feat_imp', False):
             df_fi = self._fi_model(m_df_train, m_series_y, 'feat_imp')
+            df_fi['cum_perc'].plot.line()
         else:
-            pass
-        
-        # debug code
-        print(df_anova[:20], '\n')
-        print(df_chi2[:20], '\n')
-        print(df_fi[:20])
-        anova_ax = df_anova['cum_perc'].plot.line()
+            df_fi = None
 
-        return
+        # correlation matrix
+        if bool_all or self.dict_feat_imp_flags.get('heatmap', False):
+            df_corr = m_df_train.corr()
+            idx_top_corr_feat = df_corr.index
+            heatmap = seaborn.heatmap(
+                m_df_train[idx_top_corr_feat].corr(), anot = True, cmap = 'RdYlGn')
+        else:
+            heatmap = None
+
+        return df_anova, df_chi2, df_fi, heatmap
     
     def generic_models(self, m_df_train, m_dict_models = None):
         '''

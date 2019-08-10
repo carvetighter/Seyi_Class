@@ -41,13 +41,13 @@ if __name__ == '__main__':
     bicycle_analysis.df_train_ohe = bicycle_analysis.pre_process_data(
         bicycle_analysis.df_train_common)
     
-    # var_obj = bicycle_analysis.feature_importance(
-    #     'chi', 'anova', 'all',
-    #     m_df_train = bicycle_analysis.df_train_ohe,
-    #     m_series_y = bicycle_analysis.series_train_y)
+    var_obj = bicycle_analysis.feature_importance(
+        'chi', 'anova', 'all',
+        m_df_train = bicycle_analysis.df_train_ohe,
+        m_series_y = bicycle_analysis.series_train_y)
     
     '''
     below is the modeling
     '''
     
-    print(bicycle_analysis.generic_models(bicycle_analysis.df_train_ohe))
+    # print(bicycle_analysis.generic_models(bicycle_analysis.df_train_ohe))
