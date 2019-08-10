@@ -638,26 +638,27 @@ class BicycleAnalysis(object):
         
         # anova analysis
         if bool_all or self.dict_feat_imp_flags.get('anova', False):
-            selector = self._fi_selector(m_df_train.values, m_series_y.values, f_classif)
-            dict_anova_data = {
-                'f_value':selector.scores_,
-                'feature':m_df_train.columns.values}
-            df_anova = pandas.DataFrame(data = dict_anova_data)
+            df_anova = self._fi_selector(m_df_train, m_series_y, 'anova')
         else:
             df_anova = None
         
         # chi-squared analyis
         if bool_all or self.dict_feat_imp_flags.get('chi', False):
-            selector = self._fi_selector(m_df_train.values, m_series_y.values, chi2)
-            dict_chi2_data = {
-                'chi2':selector.scores_,
-                'feature':m_df_train.columns.values}
-            df_chi2 = pandas.DataFrame(data = dict_chi2_data)
+            df_chi2 = self._fi_selector(m_df_train, m_series_y, 'chi')
         else:
             df_chi2 = None
         
-        print(df_anova.sort_values(by = 'f_value', ascending = False)[:20], '\n')
-        print(df_chi2.sort_values(by = 'chi2', ascending = False)[:20])
+        # feature importance by model
+        if bool_all or self.dict_feat_imp_flags.get('feat_imp', False):
+            df_fi = self._fi_model(m_df_train, m_series_y, 'feat_imp')
+        else:
+            pass
+        
+        # debug code
+        print(df_anova[:20], '\n')
+        print(df_chi2[:20], '\n')
+        print(df_fi[:20])
+        anova_ax = df_anova['cum_perc'].plot.line()
 
         return
     
@@ -870,40 +871,126 @@ class BicycleAnalysis(object):
         
         return m_df
     
-    def _fi_selector(self, m_fi_x, m_fi_y, m_fi_fs):f
+    def _fi_selector(self, m_fi_x, m_fi_y, m_string_func):
         '''
-        generates the selector for the feature importance
+        generates feature analysis dataframe
 
         Requirements:
         package pandas
-        package numpy
         package sklearn.feature_selection
 
         Inputs:
         m_fi_x
-        Type: pandas.DataFrame or numpy.array
+        Type: pandas.DataFrame
         Desc: data to fit selector on
 
         m_fi_y
-        Type: pandas.Series or numpy.array
+        Type: pandas.Series
         Desc: y-values to fit selector on
 
-        m_fi_fs
-        Type: sklearn.feature_selecion.<function>
-        Desc: function to choose the feature selector
+        m_string_func
+        Type: string
+        Desc: string to indicate the function
 
         Important Info:
         None
 
         Return:
         object
-        Type: sklearn.feature_selection.Selector
-        Desc: fitted selector
+        Type: pandas.DataFrame
+        Desc: feature analysis dataframe
+            columns:
+            <string_evaluation> -> the score
+            'feature' -> feature for the score
+            'cum_sum' -> cummlative sum
+            'cum_perc' -> cummlative percentage
+
         '''
-        fi_selector = SelectPercentile(m_fi_fs, percentile = 100)
+        
+        # set-up for feature selection
+        dict_sort_col = {
+            'chi':('chi2', chi2),
+            'anova':('f_value', f_classif)}
+        tup_sc = dict_sort_col.get(m_string_func, 'anova')
+
+        # feature selection
+        fi_selector = SelectPercentile(tup_sc[1], percentile = 100)
         fi_selector.fit(m_fi_x, m_fi_y)
-        return fi_selector
+
+        # create DataFrame
+        dict_chi2_data = {
+            tup_sc[0]:fi_selector.scores_,
+            'feature':m_fi_x.columns.values}
+        df_fa = pandas.DataFrame(data = dict_chi2_data)
+        df_fa = df_fa.sort_values(by = tup_sc[0], ascending = False)
+
+        # add additional information
+        float_max = df_fa[tup_sc[0]].sum()
+        series_cum_sum = df_fa[tup_sc[0]].cumsum()
+        series_perc = (series_cum_sum / float_max) * 100
+        dict_new_cols = {'cum_sum':series_cum_sum, 'cum_perc':series_perc}
+        df_fa = df_fa.assign(**dict_new_cols)
+        
+        return df_fa
     
+    def _fi_model(self, m_fi_x, m_fi_y, m_string_func):
+        '''
+        generates feature analysis dataframe
+
+        Requirements:
+        package pandas
+        package sklearn.feature_selection
+
+        Inputs:
+        m_fi_x
+        Type: pandas.DataFrame
+        Desc: data to fit selector on
+
+        m_fi_y
+        Type: pandas.Series
+        Desc: y-values to fit selector on
+
+        m_string_func
+        Type: string
+        Desc: string to indicate the function
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: pandas.DataFrame
+        Desc: feature analysis dataframe
+            columns:
+            'feat_imp' -> the score
+            'feature' -> feature for the score
+            'cum_sum' -> cummlative sum
+            'cum_perc' -> cummlative percentage
+
+        '''
+        
+        # model for feature importances
+        rf_model = RandomForestClassifier()
+        rf_model.fit(m_fi_x, m_fi_y)
+
+        # create values for series
+        series_fi = pandas.Series(rf_model.feature_importances_)
+        df_fi = pandas.DataFrame(
+            {
+                m_string_func:series_fi.values,
+                'feature':m_fi_x.columns.values.tolist()
+            }
+        )
+        df_fi = df_fi.sort_values(by = m_string_func, ascending = False)
+
+        # create additional columns
+        series_cum_sum = df_fi[m_string_func].cumsum()
+        float_max = series_cum_sum.max()
+        series_cum_perc = (series_cum_sum / float_max) * 100
+        dict_data = {'cum_sum':series_cum_sum.values, 'cum_perc':series_cum_perc.values}
+
+        return df_fi.assign(**dict_data)
+
     #--------------------------------------------------------------------------#
     # example
     #--------------------------------------------------------------------------#
