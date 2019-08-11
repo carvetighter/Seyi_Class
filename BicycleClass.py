@@ -10,7 +10,7 @@
 ###############################################
 
 from matplotlib import pyplot
-from collections import Counter
+from datetime import datetime
 
 # models
 from sklearn.preprocessing import OneHotEncoder
@@ -58,7 +58,6 @@ import numpy
 import os
 import seaborn
 import pickle
-import random
 
 import warnings
 warnings.simplefilter('ignore')
@@ -916,18 +915,16 @@ class BicycleAnalysis(object):
                 estimator = dict_model_params.get('clf')(),
                 param_distributions = dict_model_params.get('params', dict()),
                 scoring = dict_model_params.get('scorer', 'f1'),
-                n_iter = 20,
+                n_iter = 3,
                 cv = 5,
                 return_train_score = True
             )
 
-            # debug code
-            # print(string_model)
-            # print(random_search.get_params(), '\n')
-
-            # fit model
+            # fit model and start timer
             print('randomly searching variables for {}'.format(string_model), '\n')
+            dt_start = datetime.now()
             random_search.fit(df_x_train.values, series_y_train.values)
+            td_rs = datetime.now() - dt_start
 
             # get best results
             best_estimator = random_search.best_estimator_,
@@ -941,7 +938,8 @@ class BicycleAnalysis(object):
                 'best_score':best_score,
                 'best_params':best_params,
                 'cv_results':cv_results,
-                'generic_model':dict_model_params.get('clf')
+                'generic_model':dict_model_params.get('clf'),
+                'time':td_rs.total_seconds()
             }
         
         return dict_best_tuning
