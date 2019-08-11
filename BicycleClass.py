@@ -42,6 +42,7 @@ import pandas
 import numpy
 import os
 import seaborn
+import pickle
 
 import warnings
 warnings.simplefilter('ignore')
@@ -589,12 +590,21 @@ class BicycleAnalysis(object):
         
         df_prep = df_prep.drop(labels = list_ohe_cols, axis = 1)
         df_ohe = pandas.DataFrame(array_ohe, columns = list_ohe_col_names)
+        df_pp = pandas.concat([df_prep, df_ohe], axis = 1)
+        del df_prep, df_ohe
+
+        #--------------------------------------------------------------------------#
+        # safe dataframe
+        #--------------------------------------------------------------------------#
+
+        string_pp_save = os.path.join(self.string_data_path, 'df_ohe.pckl')
+        pickle.dump(df_pp, open(string_pp_save, 'wb'))
 
         #--------------------------------------------------------------------------#
         # return value
         #--------------------------------------------------------------------------#
 
-        return pandas.concat([df_prep, df_ohe], axis = 1)
+        return df_pp
     
     def feature_importance(self, *args, m_df_train, m_series_y):
         '''
@@ -778,9 +788,33 @@ class BicycleAnalysis(object):
         # dataframe of results
         df_results = pandas.DataFrame(dict_return)
         df_results = df_results.transpose()
+        df_results = df_results.sort_values(by = 'f1', ascending = False)
+
+        # save dataframe
+        string_gen_models = os.path.join(self.string_data_path, 'df_gen_models.pckl')
+        pickle.dump(df_results, open(string_gen_models, 'wb'))
         
-        return df_results.sort_values(by = 'f1', ascending = False)
+        return df_results
     
+    def model_tuning(self, m_int_num_top_models = 2):
+        '''
+        '''
+        # load generic models
+        string_gm = os.path.join(self.string_data_path, 'df_gen_models.pckl')
+        df_gen_models = pickle.load(open(string_gm, 'rb'))
+        list_top_models = df_gen_models.index[:m_int_num_top_models].values.tolist()
+        del df_gen_models
+
+        # debug code
+        print(list_top_models)
+        
+        # create model tuning diciontary
+        dict_model_tuning_params {
+            'Ridge':{},
+            'GradBoost':{}
+        }  
+        
+        return
     #--------------------------------------------------------------------------#
     # supportive methods
     #--------------------------------------------------------------------------#
