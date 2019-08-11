@@ -17,8 +17,8 @@ if __name__ == '__main__':
     '''
     
     bicycle_analysis = BicycleAnalysis()
-    print('LOADING DATA', '\n')
-    bicycle_analysis.load_data(m_bool_filter_columns = True)
+    # print('LOADING DATA', '\n')
+    # bicycle_analysis.load_data(m_bool_filter_columns = True)
     
     '''
     below is the exploration of the data
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     below is the set-up for modeling
     '''
     
-    print('PRE-PROCESSING DATA', '\n')
-    bicycle_analysis.df_test_ohe = bicycle_analysis.pre_process_data(
-        bicycle_analysis.df_test_common, False)
-    bicycle_analysis.df_train_ohe = bicycle_analysis.pre_process_data(
-        bicycle_analysis.df_train_common, True)
+    # print('PRE-PROCESSING DATA', '\n')
+    # bicycle_analysis.df_test_ohe = bicycle_analysis.pre_process_data(
+    #     bicycle_analysis.df_test_common, False)
+    # bicycle_analysis.df_train_ohe = bicycle_analysis.pre_process_data(
+    #     bicycle_analysis.df_train_common, True)
     
     '''
     feature engineering
@@ -62,4 +62,4 @@ if __name__ == '__main__':
     below is the model tuning for the top two generic models
     '''
 
-    # tup_model_tuning = bicycle_analysis.model_tuning()
+    tup_model_tuning = bicycle_analysis.model_tuning()

@@ -813,18 +813,30 @@ class BicycleAnalysis(object):
         list_top_models = df_gen_models.index[:m_int_num_top_models].values.tolist()
         del df_gen_models
 
-        # debug code
-        print(list_top_models)
-
         # create model tuning diciontary
         dict_model_tuning_params = {
             'Ridge':{},
             'GradBoost':{}
         }
 
-        # loop through
+        # loop through models to tune
+        dict_best_tuning = dict()
+        for string_model in list_top_models:
+            # set-up best_model diciontary
+            dict_model = {'best_model':None, 'params':None, 'scores':None}
+
+            # get params
+            dict_model_params = dict_model_tuning_params.get(string_model, dict())
+
+            # conduct random search
+
+            # get best model
+
+            # add to return dictionary
+            dict_best_tuning[string_model] = {}
         
         return
+
     #--------------------------------------------------------------------------#
     # supportive methods
     #--------------------------------------------------------------------------#
