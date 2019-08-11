@@ -16,7 +16,6 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
-# from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
@@ -25,7 +24,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.neighbors import RadiusNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.svm import NuSVC
 from sklearn.svm import SVC
@@ -389,12 +387,14 @@ class BicycleAnalysis(object):
                         
                         # plot train / test data
                         axes[0] = self._ctt_plot_train_test(axes[0], series_train,
-                            int_max, 'Train')
+                            int_max, 'Train', 90)
                         axes[1] = self._ctt_plot_train_test(axes[1], series_test,
-                            int_max, 'Test')
+                            int_max, 'Test', 90)
 
-                        # show plots
-                        pyplot.show()
+                        # save plot
+                        string_plot_name = 'cc_' + string_column + '.png'
+                        fig.savefig(os.path.join(
+                            self.string_plots_path, string_plot_name))
             
             # predicted column
             if string_analysis == 'prediction_column':
@@ -404,11 +404,12 @@ class BicycleAnalysis(object):
                 # plot predicted column
                 fig, ax = pyplot.subplots()
                 ax = self._ctt_plot_train_test(ax, series_bb_train,
-                    2, 'Train')
+                    2, 'Train', 0)
                 fig.suptitle('BikeBuyer Yes (1) or No (0)')
                 
-                # show plots
-                pyplot.show()
+                # save plot
+                string_plot_name = 'pd_bikebuyer.png'
+                fig.savefig(os.path.join(self.string_plots_path, string_plot_name))
     
         #--------------------------------------------------------------------------#
         # return value
@@ -820,7 +821,7 @@ class BicycleAnalysis(object):
         return series_values.sort_values(ascending = False)
     
     def _ctt_plot_train_test(self, m_plot, m_series_data, m_int_max_cat = 10,
-        m_string_data = 'Train'):
+        m_string_data = 'Train', m_int_x_tick_rotation = 90):
         '''
         plot train / test values
 
@@ -841,6 +842,10 @@ class BicycleAnalysis(object):
         Type: integer
         Desc: max amount of categories to plot
 
+        m_int_x_tick_rotation
+        Type: integer
+        Desc: number of degrees to rotate the xtick label
+
         Important Info:
         None
 
@@ -851,10 +856,13 @@ class BicycleAnalysis(object):
         '''
         
         # plot the data
+        series_plot = m_series_data[:m_int_max_cat]
         m_plot.bar(
-            x = m_series_data.index.values.tolist()[:m_int_max_cat],
-            height  = m_series_data[:m_int_max_cat].values)
-        m_plot.tick_params(axis = 'x', rotation = 90)
+            x = series_plot.index.values.tolist(),
+            height  = series_plot.values)
+        m_plot.set_xticks([x for x in range(0, len(series_plot))])
+        m_plot.set_xticklabels(series_plot.index.values.tolist(), 
+            rotation = m_int_x_tick_rotation)
         if m_string_data == 'Test':
             m_plot.tick_params(axis = 'y', right = True, left = False, 
                 labelright = True, labelleft = False, direction = 'out')
