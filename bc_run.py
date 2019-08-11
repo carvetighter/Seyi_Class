@@ -10,16 +10,15 @@
 ###############################################
 
 from BicycleClass import BicycleAnalysis
-import pickle
 
 if __name__ == '__main__':
     '''
     load data
     '''
     
-    # print('LOADING DATA', '\n')
-    # bicycle_analysis = BicycleAnalysis()
-    # bicycle_analysis.load_data(m_bool_filter_columns = True)
+    bicycle_analysis = BicycleAnalysis()
+    print('LOADING DATA', '\n')
+    bicycle_analysis.load_data(m_bool_filter_columns = True)
     
     '''
     below is the exploration of the data
@@ -34,11 +33,11 @@ if __name__ == '__main__':
     below is the set-up for modeling
     '''
     
-    # print('PRE-PROCESSING DATA', '\n')
-    # bicycle_analysis.df_test_ohe = bicycle_analysis.pre_process_data(
-    #     bicycle_analysis.df_test_common)
-    # bicycle_analysis.df_train_ohe = bicycle_analysis.pre_process_data(
-    #     bicycle_analysis.df_train_common)
+    print('PRE-PROCESSING DATA', '\n')
+    bicycle_analysis.df_test_ohe = bicycle_analysis.pre_process_data(
+        bicycle_analysis.df_test_common, False)
+    bicycle_analysis.df_train_ohe = bicycle_analysis.pre_process_data(
+        bicycle_analysis.df_train_common, True)
     
     '''
     feature engineering
@@ -54,10 +53,10 @@ if __name__ == '__main__':
     below is the modeling
     '''
     
-    print('GENERIC MODEL TESTING', '\n')
-    df_gen_models = bicycle_analysis.generic_models(bicycle_analysis.df_train_ohe)
-    print()
-    print(df_gen_models)
+    # print('GENERIC MODEL TESTING', '\n')
+    # df_gen_models = bicycle_analysis.generic_models(bicycle_analysis.df_train_ohe)
+    # print()
+    # print(df_gen_models)
 
     '''
     below is the model tuning for the top two generic models

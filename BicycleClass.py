@@ -513,7 +513,7 @@ class BicycleAnalysis(object):
 
         return
     
-    def pre_process_data(self, m_df):
+    def pre_process_data(self, m_df, m_bool_train):
         '''
         this method pre-processes the data for modeling
 
@@ -524,6 +524,10 @@ class BicycleAnalysis(object):
         m_df
         Type: pandas.DataFrame
         Desc: data for either train or test to process
+
+        m_bool_train
+        Type: boolean
+        Desc: flag if training or test set
 
         Important Info:
         None
@@ -597,7 +601,11 @@ class BicycleAnalysis(object):
         # safe dataframe
         #--------------------------------------------------------------------------#
 
-        string_pp_save = os.path.join(self.string_data_path, 'df_ohe.pckl')
+        if m_bool_train:
+            string_file = 'df_ohe_train.pckl'
+        else:
+            string_file = 'df_ohe_test.pckl'
+        string_pp_save = os.path.join(self.string_data_path, string_file)
         pickle.dump(df_pp, open(string_pp_save, 'wb'))
 
         #--------------------------------------------------------------------------#
@@ -807,12 +815,14 @@ class BicycleAnalysis(object):
 
         # debug code
         print(list_top_models)
-        
+
         # create model tuning diciontary
-        dict_model_tuning_params {
+        dict_model_tuning_params = {
             'Ridge':{},
             'GradBoost':{}
-        }  
+        }
+
+        # loop through
         
         return
     #--------------------------------------------------------------------------#
