@@ -9,6 +9,7 @@ dependencies:
   - spyder
   - pandas
   - matplotlib
+  - seaborn
   - pip:
     - git+https://github.com/carvetighter/Timer@master
 
