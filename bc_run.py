@@ -17,7 +17,7 @@ if __name__ == '__main__':
     '''
     
     bicycle_analysis = BicycleAnalysis()
-    # print('LOADING DATA', '\n')
+    # print('\nLOADING DATA', '\n')
     # bicycle_analysis.load_data(m_bool_filter_columns = True)
     
     '''

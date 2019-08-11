@@ -11,6 +11,8 @@
 
 from matplotlib import pyplot
 from collections import Counter
+
+# models
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -29,20 +31,34 @@ from sklearn.svm import NuSVC
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import ExtraTreeClassifier
+
+# metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
+
+# pre-processing
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import SelectPercentile
+
+# model tuning
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
+from sklearn.metrics import f1_score
+from sklearn.metrics import roc_auc_score
+from numpy.random import uniform
+from numpy.random import randint
 
 import pandas
 import numpy
 import os
 import seaborn
 import pickle
+import random
 
 import warnings
 warnings.simplefilter('ignore')
@@ -287,6 +303,12 @@ class BicycleAnalysis(object):
             self.series_train_y = self.df_train_raw[self.string_y_col]
             self.df_test_raw = self.df_test_raw.drop(self.string_y_col, axis = 1)
             self.df_train_raw = self.df_train_raw.drop(self.string_y_col, axis = 1)
+
+            # pickle tain & test y-values
+            string_y_test = os.path.join(self.string_data_path, 'series_y_test.pckl')
+            string_y_train = os.path.join(self.string_data_path, 'series_y_train.pckl')
+            pickle.dump(self.series_test_y, open(string_y_test, 'wb'))
+            pickle.dump(self.series_train_y, open(string_y_train, 'wb'))
 
         ###############################################
         ###############################################
@@ -804,8 +826,41 @@ class BicycleAnalysis(object):
         
         return df_results
     
-    def model_tuning(self, m_int_num_top_models = 2):
+    def model_tuning(self, m_int_num_top_models = 2, m_string_scorer = 'f1'):
         '''
+        this method tunes the top 'n' models; right now set up for gradboost and ridge
+        classification
+
+        Requirements:
+        package pandas
+        package sklearn
+
+        Inputs:
+        m_int_num_top_models
+        Type: pandas.DataFrame
+        Desc: train data
+
+        m_string_scorer
+        Type: pandas.DataFrame
+        Desc: train data
+
+        Important Info:
+        1. in the pramater dictionary the classifer is the address to the classifier
+           and not the classifier istself; that is why '()' need to be at the end
+           'estimator' section of the random search object
+
+        Return:
+        object
+        Type: dictionary
+        Desc: the best estimator and other varriables of the random search
+            key -> string, name of model; value -> dictionary of estimator info
+            dict[string_model] = {
+                'best_est':best_estimator,
+                'best_score':best_score,
+                'best_params':best_params,
+                'cv_results':cv_results,
+                'generic_model':address of generic estimator
+            }
         '''
         # load generic models
         string_gm = os.path.join(self.string_data_path, 'df_gen_models.pckl')
@@ -813,29 +868,83 @@ class BicycleAnalysis(object):
         list_top_models = df_gen_models.index[:m_int_num_top_models].values.tolist()
         del df_gen_models
 
+        # make scorer
+        dict_scorer = {'f1':make_scorer(f1_score), 'roc_auc':make_scorer(roc_auc_score)}
+
         # create model tuning diciontary
         dict_model_tuning_params = {
-            'Ridge':{},
-            'GradBoost':{}
+            'Ridge':{
+                'clf':RidgeClassifier,
+                'params':{
+                    'alpha':uniform(low = 0.01, high = 2, size = 10),
+                    'fit_intercept':[True, False],
+                    'tol':uniform(low = 0.001, high = 0.7, size = 10),
+                    'solver':['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga']
+                },
+                'scorer':dict_scorer.get('f1', 'f1')
+            },
+            'GradBoost':{
+                'clf':GradientBoostingClassifier,
+                'params':{
+                    'loss':['deviance', 'exponential'],
+                    'learning_rate':uniform(low = 0.01, high = 0.7, size = 10),
+                    'n_estimators':randint(low = 20, high = 500, size = 10),
+                    'criterion':['friedman_mse', 'mse', 'mae'],
+                    'min_samples_split':[x for x in range(2, 9)],
+                    'min_samples_leaf':[x for x in range(1, 11)],
+                    'max_depth':[2, 3, 4, 5]
+                },
+                'scorer':dict_scorer.get('f1', 'f1')
+            }
         }
+
+        # load train data
+        print('loading traning data')
+        string_path_x = os.path.join(self.string_data_path, 'df_ohe_train.pckl')
+        string_path_y = os.path.join(self.string_data_path, 'series_y_train.pckl')
+        df_x_train = pickle.load(open(string_path_x, 'rb'))
+        series_y_train = pickle.load(open(string_path_y, 'rb'))
 
         # loop through models to tune
         dict_best_tuning = dict()
         for string_model in list_top_models:
-            # set-up best_model diciontary
-            dict_model = {'best_model':None, 'params':None, 'scores':None}
-
             # get params
             dict_model_params = dict_model_tuning_params.get(string_model, dict())
 
             # conduct random search
+            random_search = RandomizedSearchCV(
+                estimator = dict_model_params.get('clf')(),
+                param_distributions = dict_model_params.get('params', dict()),
+                scoring = dict_model_params.get('scorer', 'f1'),
+                n_iter = 20,
+                cv = 5,
+                return_train_score = True
+            )
 
-            # get best model
+            # debug code
+            # print(string_model)
+            # print(random_search.get_params(), '\n')
+
+            # fit model
+            print('randomly searching variables for {}'.format(string_model), '\n')
+            random_search.fit(df_x_train.values, series_y_train.values)
+
+            # get best results
+            best_estimator = random_search.best_estimator_,
+            best_score = random_search.best_score_,
+            best_params = random_search.best_params_
+            cv_results = random_search.cv_results_
 
             # add to return dictionary
-            dict_best_tuning[string_model] = {}
+            dict_best_tuning[string_model] = {
+                'best_est':best_estimator,
+                'best_score':best_score,
+                'best_params':best_params,
+                'cv_results':cv_results,
+                'generic_model':dict_model_params.get('clf')
+            }
         
-        return
+        return dict_best_tuning
 
     #--------------------------------------------------------------------------#
     # supportive methods
