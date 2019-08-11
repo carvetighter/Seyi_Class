@@ -921,7 +921,7 @@ class BicycleAnalysis(object):
             )
 
             # fit model and start timer
-            print('randomly searching variables for {}'.format(string_model), '\n')
+            print('randomly searching variables for {}'.format(string_model))
             dt_start = datetime.now()
             random_search.fit(df_x_train.values, series_y_train.values)
             td_rs = datetime.now() - dt_start
@@ -941,6 +941,10 @@ class BicycleAnalysis(object):
                 'generic_model':dict_model_params.get('clf'),
                 'time':td_rs.total_seconds()
             }
+        
+        # pickle model dictionary
+        string_bt = os.path.join(self.string_data_path, 'dict_best_estimator.pckl')
+        pickle.dump(dict_best_tuning, open(string_bt, 'wb'))
         
         return dict_best_tuning
 
