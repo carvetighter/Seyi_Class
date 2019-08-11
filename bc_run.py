@@ -37,7 +37,7 @@ if __name__ == '__main__':
         bicycle_analysis.df_train_common)
     
     var_obj = bicycle_analysis.feature_importance(
-        'all',
+        'heatmap',
         m_df_train = bicycle_analysis.df_train_ohe,
         m_series_y = bicycle_analysis.series_train_y)
     

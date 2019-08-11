@@ -102,6 +102,7 @@ class BicycleAnalysis(object):
 
         self.string_data_path = os.path.abspath('./data')
         self.string_model_path = os.path.abspath('./models')
+        self.string_plots_path = os.path.abspath('./plots')
         self.string_file_test = 'test_technidus_clf.csv'
         self.string_file_train = 'train_technidus_clf.csv'
         self.set_source_files = set([self.string_file_test, self.string_file_train])
@@ -630,7 +631,7 @@ class BicycleAnalysis(object):
             tuple[0] -> df; anova
             tuple[1] -> df; chi-squared 
             tuple[2] -> df; feature imporance based on random forest
-            tuple[03] -> df; correlation heatmap from seaborn
+            tuple[3] -> df; correlation heatmap from seaborn
         '''
 
         # set the arguements
@@ -647,20 +648,22 @@ class BicycleAnalysis(object):
         if bool_all or self.dict_feat_imp_flags.get('anova', False):
             df_anova = self._fi_selector(m_df_train, m_series_y, 'anova')
             df_anova['cum_perc'].plot.line()
+            self._create_line(df_anova[:20], 'cum_perc', 'anova.png', 'anova')
         else:
             df_anova = None
         
         # chi-squared analyis
         if bool_all or self.dict_feat_imp_flags.get('chi', False):
             df_chi2 = self._fi_selector(m_df_train, m_series_y, 'chi')
-            df_chi2['cum_perc'].plot.line()
+            self._create_line(df_chi2[:20], 'cum_perc', 'chi2.png', 'chi^2')
         else:
             df_chi2 = None
         
         # feature importance by model
         if bool_all or self.dict_feat_imp_flags.get('feat_imp', False):
             df_fi = self._fi_model(m_df_train, m_series_y, 'feat_imp')
-            df_fi['cum_perc'].plot.line()
+            self._create_line(df_anova[:20], 'cum_perc', 'model_fi.png',
+                'model feature importance')
         else:
             df_fi = None
 
@@ -668,15 +671,16 @@ class BicycleAnalysis(object):
         if bool_all or self.dict_feat_imp_flags.get('heatmap', False):
             df_corr = m_df_train.corr()
             idx_top_corr_feat = df_corr.index
+            fig = pyplot.figure()
             heatmap = seaborn.heatmap(
-                m_df_train[idx_top_corr_feat].corr(), annot = True, cmap = 'RdYlGn')
+                m_df_train[idx_top_corr_feat].corr(), annot = False, cmap = 'RdYlGn')
+            heatmap.set_title('correlation heatmap')
+            fig.add_axes(heatmap)
+            fig.savefig(os.path.join(self.string_plots_path, 'heatmap.png'))
         else:
             heatmap = None
-            
-        # debug code
-        print(df_anova[:20])
 
-        return df_anova, df_chi2, df_fi, heatmap
+        return df_anova, df_chi2, df_fi, df_corr
     
     def generic_models(self, m_df_train, m_dict_models = None):
         '''
@@ -934,10 +938,10 @@ class BicycleAnalysis(object):
         fi_selector.fit(m_fi_x, m_fi_y)
 
         # create DataFrame
-        dict_chi2_data = {
+        dict_data = {
             tup_sc[0]:fi_selector.scores_,
             'feature':m_fi_x.columns.values}
-        df_fa = pandas.DataFrame(data = dict_chi2_data)
+        df_fa = pandas.DataFrame(data = dict_data)
         df_fa = df_fa.sort_values(by = tup_sc[0], ascending = False)
 
         # add additional information
@@ -1006,6 +1010,22 @@ class BicycleAnalysis(object):
         dict_data = {'cum_sum':series_cum_sum.values, 'cum_perc':series_cum_perc.values}
 
         return df_fi.assign(**dict_data)
+
+    def _create_line(self, m_df, m_string_col, m_string_plot_name, m_string_title):
+        '''
+        '''
+
+        fig, ax = pyplot.subplots()
+        ax.plot(m_df[m_string_col].values)
+        ax.set_xlabel('feature')
+        ax.set_ylabel(m_string_col)
+        ax.set_xticks([x for x in range(0, len(m_df['feature']))])
+        ax.set_xticklabels(m_df['feature'].values, rotation = 90)
+        ax.set_title(m_string_title)
+        string_fig_path = os.path.join(self.string_plots_path, m_string_plot_name)
+        fig.savefig(string_fig_path)
+
+        return
 
     #--------------------------------------------------------------------------#
     # example
