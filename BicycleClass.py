@@ -235,54 +235,54 @@ class BicycleAnalysis(object):
         # load data
         #--------------------------------------------------------------------------------#
         
-        print('\nLOADING DATA', '\n')
-        self.load_data(m_bool_filter_columns = True)
+        # print('\nLOADING DATA', '\n')
+        # self.load_data(m_bool_filter_columns = True)
         
         #--------------------------------------------------------------------------------#
         # below is the exploration of the data
         #--------------------------------------------------------------------------------#
         
-        print('DATA EXPLORATION', '\n')
-        self.compare_train_test(['categorical_columns'])
-        self.compare_train_test(['prediction_column'])
-        self.basic_exploration()
+        # print('DATA EXPLORATION', '\n')
+        # self.compare_train_test(['categorical_columns'])
+        # self.compare_train_test(['prediction_column'])
+        # self.basic_exploration()
         
         #--------------------------------------------------------------------------------#
         # below is the set-up for modeling
         #--------------------------------------------------------------------------------#
         
-        print('PRE-PROCESSING DATA', '\n')
-        self.df_test_ohe = self.pre_process_data(self.df_test_common, False)
-        self.df_train_ohe = self.pre_process_data(self.df_train_common, True)
+        # print('PRE-PROCESSING DATA', '\n')
+        # self.df_test_ohe = self.pre_process_data(self.df_test_common, False)
+        # self.df_train_ohe = self.pre_process_data(self.df_train_common, True)
         
         #--------------------------------------------------------------------------------#
         # feature engineering
         #--------------------------------------------------------------------------------#
         
-        print('FEATURE ENGINEERING', '\n')
-        tup_dfs = self.feature_importance('all',
-            m_df_train = self.df_train_ohe,
-            m_series_y = self.series_train_y)
+        # print('FEATURE ENGINEERING', '\n')
+        # tup_dfs = self.feature_importance('all',
+        #     m_df_train = self.df_train_ohe,
+        #     m_series_y = self.series_train_y)
         
         #--------------------------------------------------------------------------------#
         # below is the modeling
         #--------------------------------------------------------------------------------#
         
-        print('GENERIC MODEL TESTING', '\n')
-        df_gen_models = self.generic_models(self.df_train_ohe)
-        print()
-        print(df_gen_models)
+        # print('GENERIC MODEL TESTING', '\n')
+        # df_gen_models = self.generic_models(self.df_train_ohe)
+        # print()
+        # print(df_gen_models)
 
         #--------------------------------------------------------------------------------#
         # below is the model tuning for the top two generic models
         #--------------------------------------------------------------------------------#
 
-        print('TUNING TWO MODELS', '\n')
-        dict_model_tuning = self.model_tuning()
-        for string_clf in dict_model_tuning:
-            print(string_clf)
-            print(dict_model_tuning[string_clf]['best_estimator'])
-            print(dict_model_tuning[string_clf]['best_score'], '\n')
+        # print('TUNING TWO MODELS', '\n')
+        # dict_model_tuning = self.model_tuning()
+        # for string_clf in dict_model_tuning:
+        #     print(string_clf)
+        #     print(dict_model_tuning[string_clf]['best_est'])
+        #     print(dict_model_tuning[string_clf]['best_score'], '\n')
 
         #--------------------------------------------------------------------------------#
         # prediction on test set
@@ -676,11 +676,10 @@ class BicycleAnalysis(object):
         #--------------------------------------------------------------------------#
 
         list_ohe_col_names = list()
-        for int_idx in range(0, len(list_ohe_cols)):
-            string_col = list_ohe_cols[int_idx]
+        for int_idx, string_col in enumerate(list_ohe_cols):
             array_cats = ohe.categories_[int_idx]
-            for int_cat_idx in range(0, len(array_cats)):
-                list_ohe_col_names.append(string_col + '_' + array_cats[int_cat_idx])
+            for int_cat_idx, string_cat in enumerate(array_cats):
+                list_ohe_col_names.append(string_col + '_' + string_cat)
         
         #--------------------------------------------------------------------------#
         # create dataframes to concat
@@ -937,7 +936,8 @@ class BicycleAnalysis(object):
                 'generic_model':address of generic estimator
             }
         '''
-        list_top_models = ['Ridge', 'GradBoost']
+        # list_top_models = ['Ridge', 'GradBoost']
+        list_top_models = ['Ridge']
 
         # make scorer
         dict_scorer = {'f1':make_scorer(f1_score), 'roc_auc':make_scorer(roc_auc_score)}
@@ -1045,13 +1045,19 @@ class BicycleAnalysis(object):
         '''
         # load test data
         string_test_x = os.path.join(self.string_data_path, 'df_ohe_test.pckl')
+        string_train_x = os.path.join(self.string_data_path, 'df_ohe_train.pckl')
         df_test_x = pickle.load(open(string_test_x, 'rb'))
+        df_train_x = pickle.load(open(string_train_x, 'rb'))
+
+        # ensure same columns training and test sets
+        df_test_x = self._pot_same_columns(df_test_x, df_train_x.columns.values.tolist(),
+            df_train_x.dtypes.values.tolist())
 
         # load classifier
         string_tm = os.path.join(self.string_data_path, 'dict_best_estimator.pckl')
         dict_tuned_models = pickle.load(open(string_tm, 'rb'))
         if isinstance(dict_tuned_models, dict) and m_string_classifier in dict_tuned_models.keys():            
-            best_clf = dict_tuned_models[m_string_classifier]['best_estimator']
+            best_clf = dict_tuned_models[m_string_classifier]['best_est']
         else:
             best_clf = None
         
@@ -1069,7 +1075,8 @@ class BicycleAnalysis(object):
         # create plot of prediction
         fig, ax = pyplot.subplots()
         string_plot_title = 'BicycleBuyer Predicted'
-        ax = self._ctt_plot_train_test(ax, string_y_hat_dump,
+        series_yhat_counts = self._ctt_calc_cat_values(series_y_hat)
+        ax = self._ctt_plot_train_test(ax, series_yhat_counts,
             m_string_data = string_plot_title, m_int_x_tick_rotation = 0)
         string_save_yhat_plot = os.path.join(self.string_plots_path, 'bb_predicted.png')
         fig.savefig(string_save_yhat_plot)
@@ -1329,3 +1336,69 @@ class BicycleAnalysis(object):
         fig.savefig(string_fig_path)
 
         return
+
+    def _pot_same_columns(self, m_df_test, m_list_train_cols, m_list_train_dtypes):
+        '''
+        ensures the same columns are in the train and test sets
+
+        Requirements:
+        package pandas
+        package numpy
+
+        Inputs:
+        m_df_test
+        Type: pandas.DataFrame
+        Desc: dataframe of test data
+
+        m_list_train_cols
+        Type: list
+        Desc: training data set columns
+
+        m_list_train_dtypes
+        Type: list
+        Desc: data types of training dataset
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: pandas.DataFrame
+        Desc: test data with the same columns at the training data set
+        '''
+        # get columns needed and columns to drop
+        df_test = m_df_test.copy()
+        set_train_cols = set(m_list_train_cols)
+        set_test_cols = set(df_test.columns.values.tolist())
+        set_cols_needed = set_train_cols - set_test_cols
+        set_cols_to_drop = set_test_cols - set_train_cols
+
+        # add columns
+        dict_data_to_add = dict()
+        for string_col_to_add in set_cols_needed:
+            # get index and dtype from lists
+            int_index = m_list_train_cols.index(string_col_to_add)
+            dtype = m_list_train_dtypes[int_index]
+
+            # generate fill value
+            if dtype == numpy.dtype('int64'):
+                fill_value = 0
+            else:
+                fill_value = 0.
+            
+            # create series & add to data dictionary
+            series_fill = pandas.Series([fill_value for x in range(0, len(df_test))])
+            dict_data_to_add[string_col_to_add] = series_fill
+
+        # create dataframe
+        df_to_add = pandas.DataFrame(data = dict_data_to_add)
+
+        # cols to drop
+        if len(set_cols_to_drop) > 0:
+            list_cols_to_drop = list(set_cols_to_drop)
+            df_test = df_test.drop(list_cols_to_drop, axis = 1)
+        
+        # return dataframe
+        df_return = pandas.concat([df_test, df_to_add], axis = 1)
+
+        return df_return[m_list_train_cols]
