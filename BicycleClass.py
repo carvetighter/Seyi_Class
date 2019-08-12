@@ -235,54 +235,54 @@ class BicycleAnalysis(object):
         # load data
         #--------------------------------------------------------------------------------#
         
-        # print('\nLOADING DATA', '\n')
-        # self.load_data(m_bool_filter_columns = True)
+        print('\nLOADING DATA', '\n')
+        self.load_data(m_bool_filter_columns = True)
         
         #--------------------------------------------------------------------------------#
         # below is the exploration of the data
         #--------------------------------------------------------------------------------#
         
-        # print('DATA EXPLORATION', '\n')
-        # self.compare_train_test(['categorical_columns'])
-        # self.compare_train_test(['prediction_column'])
-        # self.basic_exploration()
+        print('DATA EXPLORATION', '\n')
+        self.compare_train_test(['categorical_columns'])
+        self.compare_train_test(['prediction_column'])
+        self.basic_exploration()
         
         #--------------------------------------------------------------------------------#
         # below is the set-up for modeling
         #--------------------------------------------------------------------------------#
         
-        # print('PRE-PROCESSING DATA', '\n')
-        # self.df_test_ohe = self.pre_process_data(self.df_test_common, False)
-        # self.df_train_ohe = self.pre_process_data(self.df_train_common, True)
+        print('PRE-PROCESSING DATA', '\n')
+        self.df_test_ohe = self.pre_process_data(self.df_test_common, False)
+        self.df_train_ohe = self.pre_process_data(self.df_train_common, True)
         
         #--------------------------------------------------------------------------------#
         # feature engineering
         #--------------------------------------------------------------------------------#
         
-        # print('FEATURE ENGINEERING', '\n')
-        # tup_dfs = self.feature_importance('all',
-        #     m_df_train = self.df_train_ohe,
-        #     m_series_y = self.series_train_y)
+        print('FEATURE ENGINEERING', '\n')
+        tup_dfs = self.feature_importance('all',
+            m_df_train = self.df_train_ohe,
+            m_series_y = self.series_train_y)
         
         #--------------------------------------------------------------------------------#
         # below is the modeling
         #--------------------------------------------------------------------------------#
         
-        # print('GENERIC MODEL TESTING', '\n')
-        # df_gen_models = self.generic_models(self.df_train_ohe)
-        # print()
-        # print(df_gen_models)
+        print('GENERIC MODEL TESTING', '\n')
+        df_gen_models = self.generic_models(self.df_train_ohe)
+        print()
+        print(df_gen_models, '\n')
 
         #--------------------------------------------------------------------------------#
         # below is the model tuning for the top two generic models
         #--------------------------------------------------------------------------------#
 
-        # print('TUNING TWO MODELS', '\n')
-        # dict_model_tuning = self.model_tuning()
-        # for string_clf in dict_model_tuning:
-        #     print(string_clf)
-        #     print(dict_model_tuning[string_clf]['best_est'])
-        #     print(dict_model_tuning[string_clf]['best_score'], '\n')
+        print('TUNING TWO MODELS', '\n')
+        dict_model_tuning = self.model_tuning()
+        for string_clf in dict_model_tuning:
+            print('\n' + string_clf)
+            print(dict_model_tuning[string_clf]['best_est'])
+            print(dict_model_tuning[string_clf]['best_score'], '\n')
 
         #--------------------------------------------------------------------------------#
         # prediction on test set
@@ -290,6 +290,7 @@ class BicycleAnalysis(object):
 
         print('PREDICT ON THE TEST SET', '\n')
         series_y_hat = self.predict_on_test('Ridge')
+        print('BikeBuyer analysis complete')
 
         return
 
