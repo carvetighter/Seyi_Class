@@ -10,7 +10,6 @@ from matplotlib import pyplot
 from datetime import datetime
 
 # models
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import ExtraTreesClassifier
@@ -34,6 +33,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 
 # pre-processing
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import chi2
