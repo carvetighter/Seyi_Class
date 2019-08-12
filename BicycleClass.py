@@ -34,7 +34,6 @@ from sklearn.tree import ExtraTreeClassifier
 
 # metrics
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 
@@ -786,6 +785,7 @@ class BicycleAnalysis(object):
             
             # loop through train, test splits to fit and predict
             list_cv_results = list()
+            dt_start = datetime.now()
             for array_train_idx, array_test_idx in cv_sss.split(
                 m_df_train, self.series_train_y):
                 model_classifier.fit(
@@ -801,6 +801,7 @@ class BicycleAnalysis(object):
                 list_record = list(tup_prfs[:-1])
                 list_record.append(float_acc)
                 list_cv_results.append(list_record)
+            td_cv = datetime.now() - dt_start
             
             # dataframe of cv results
             df_cv_results = pandas.DataFrame(
@@ -812,7 +813,8 @@ class BicycleAnalysis(object):
                 'precision':df_cv_results['precision'].mean(),
                 'recall':df_cv_results['recall'].mean(),
                 'f1':df_cv_results['f1'].mean(),
-                'accuracy':df_cv_results['accuracy'].mean()}
+                'accuracy':df_cv_results['accuracy'].mean(),
+                'time':td_cv.total_seconds()}
         
         # dataframe of results
         df_results = pandas.DataFrame(dict_return)
@@ -825,7 +827,7 @@ class BicycleAnalysis(object):
         
         return df_results
     
-    def model_tuning(self, m_int_num_top_models = 2, m_string_scorer = 'f1'):
+    def model_tuning(self, m_int_iterations = 20, m_int_cv = 5):
         '''
         this method tunes the top 'n' models; right now set up for gradboost and ridge
         classification
@@ -835,13 +837,13 @@ class BicycleAnalysis(object):
         package sklearn
 
         Inputs:
-        m_int_num_top_models
-        Type: pandas.DataFrame
-        Desc: train data
+        m_int_iterations
+        Type: integer
+        Desc: the number of times the model will pull paramaters for the random search
 
-        m_string_scorer
-        Type: pandas.DataFrame
-        Desc: train data
+        m_int_cv
+        Type: integer
+        Desc: the number of cross validations for the random search
 
         Important Info:
         1. in the pramater dictionary the classifer is the address to the classifier
@@ -861,11 +863,7 @@ class BicycleAnalysis(object):
                 'generic_model':address of generic estimator
             }
         '''
-        # load generic models
-        string_gm = os.path.join(self.string_data_path, 'df_gen_models.pckl')
-        df_gen_models = pickle.load(open(string_gm, 'rb'))
-        list_top_models = df_gen_models.index[:m_int_num_top_models].values.tolist()
-        del df_gen_models
+        list_top_models = ['Ridge', 'GradBoost']
 
         # make scorer
         dict_scorer = {'f1':make_scorer(f1_score), 'roc_auc':make_scorer(roc_auc_score)}
@@ -885,12 +883,13 @@ class BicycleAnalysis(object):
             'GradBoost':{
                 'clf':GradientBoostingClassifier,
                 'params':{
-                    'loss':['deviance', 'exponential'],
+                    # 'loss':['deviance', 'exponential'],
+                    'loss':['exponential'],
                     'learning_rate':uniform(low = 0.01, high = 0.7, size = 10),
                     'n_estimators':randint(low = 20, high = 500, size = 10),
                     'criterion':['friedman_mse', 'mse', 'mae'],
-                    'min_samples_split':[x for x in range(2, 9)],
-                    'min_samples_leaf':[x for x in range(1, 11)],
+                    'min_samples_split':[x for x in range(2, 5)],
+                    'min_samples_leaf':[x for x in range(1, 4)],
                     'max_depth':[2, 3, 4, 5]
                 },
                 'scorer':dict_scorer.get('f1', 'f1')
@@ -915,8 +914,8 @@ class BicycleAnalysis(object):
                 estimator = dict_model_params.get('clf')(),
                 param_distributions = dict_model_params.get('params', dict()),
                 scoring = dict_model_params.get('scorer', 'f1'),
-                n_iter = 3,
-                cv = 5,
+                n_iter = m_int_iterations,
+                cv = m_int_cv,
                 return_train_score = True
             )
 
@@ -927,8 +926,8 @@ class BicycleAnalysis(object):
             td_rs = datetime.now() - dt_start
 
             # get best results
-            best_estimator = random_search.best_estimator_,
-            best_score = random_search.best_score_,
+            best_estimator = random_search.best_estimator_
+            best_score = random_search.best_score_
             best_params = random_search.best_params_
             cv_results = random_search.cv_results_
 
@@ -941,12 +940,67 @@ class BicycleAnalysis(object):
                 'generic_model':dict_model_params.get('clf'),
                 'time':td_rs.total_seconds()
             }
-        
+
         # pickle model dictionary
         string_bt = os.path.join(self.string_data_path, 'dict_best_estimator.pckl')
         pickle.dump(dict_best_tuning, open(string_bt, 'wb'))
         
         return dict_best_tuning
+
+    def predict_on_test(self, m_string_classifier):
+        '''
+        this method predicts on the test set from the best estimator from the dictionary
+        saved as a pickle file
+
+        Requirements:
+        package pandas
+        package sklearn
+
+        Inputs:
+        m_string_classifier
+        Type: string
+        Desc: key to pull the classifier from the best estimator dictionary
+
+        Important Info:
+        None
+
+        Return:
+        object
+        Type: pandas.Series
+        Desc: predicted value for the bicycle buyer
+        '''
+        # load test data
+        string_test_x = os.path.join(self.string_data_path, 'df_ohe_test.pckl')
+        df_test_x = pickle.load(open(string_test_x, 'rb'))
+
+        # load classifier
+        string_tm = os.path.join(self.string_data_path, 'dict_best_estimator.pckl')
+        dict_tuned_models = pickle.load(open(string_tm, 'rb'))
+        if isinstance(dict_tuned_models, dict) and m_string_classifier in dict_tuned_models.keys():            
+            best_clf = dict_tuned_models[m_string_classifier]['best_estimator']
+        else:
+            best_clf = None
+        
+        # predict on test set
+        if best_clf is None:
+            raise ValueError(
+                '{} is not in the tuned models dictionary'.format(m_string_classifier))
+        else:
+            array_y_hat = best_clf.predict(df_test_x.values)
+            series_y_hat = pandas.Series(data = array_y_hat, name = 'BicyleBuyer')
+            del array_y_hat
+            string_y_hat_dump = os.path.join(self.string_data_path, 'series_y_test.pckl')
+            pickle.dump(series_y_hat, open(string_y_hat_dump, 'wb'))
+        
+        # create plot of prediction
+        fig, ax = pyplot.subplots()
+        string_plot_title = 'BicycleBuyer Predicted'
+        ax = self._ctt_plot_train_test(ax, string_y_hat_dump,
+            m_string_data = string_plot_title, m_int_x_tick_rotation = 0)
+        string_save_yhat_plot = os.path.join(self.string_plots_path, 'bb_predicted.png')
+        fig.savefig(string_save_yhat_plot)
+        
+        return series_y_hat
 
     #--------------------------------------------------------------------------#
     # supportive methods

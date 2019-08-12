@@ -10,8 +10,19 @@
 ###############################################
 
 from BicycleClass import BicycleAnalysis
+import os
+import 
+import pandas
 
-if __name__ == '__main__':
+###############################################
+###############################################
+#
+# main method
+#
+###############################################
+###############################################
+
+def main():
     '''
     load data
     '''
@@ -62,4 +73,21 @@ if __name__ == '__main__':
     below is the model tuning for the top two generic models
     '''
 
-    tup_model_tuning = bicycle_analysis.model_tuning()
+    print('TUNING TWO MODELS', '\n')
+    dict_model_tuning = bicycle_analysis.model_tuning()
+    for string_clf in dict_model_tuning:
+        print(string_clf)
+        print(dict_model_tuning[string_clf]['best_estimator'])
+        print(dict_model_tuning[string_clf]['best_score'], '\n')
+    
+    '''
+    prediction on test set
+    '''
+
+    print('PREDICT ON THE TEST SET', '\n')
+    series_y_hat = bicycle_analysis.predict_on_test('Ridge')
+
+
+if __name__ == '__main__':
+    main()
+    
