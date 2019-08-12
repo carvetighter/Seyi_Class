@@ -66,7 +66,18 @@ class BicycleAnalysis(object):
 
     Requirements:
     package pandas
+    package numpy
+    package os
+    package seaborn
+    package pickle
+    package matplotlib
+    package datetime
+    package warnings
     package scikit-learn
+
+    Example:
+    ba = BicycleAnalysis()
+    ba.main()
 
     Methods:
     main -> wrapper for the analysis
