@@ -1,13 +1,10 @@
 '''
+this script analyses the BikeBuyer data set
 '''
 
-###############################################
-###############################################
-#
-# File / Package Import
-#
-###############################################
-###############################################
+'''
+package import
+'''
 
 from matplotlib import pyplot
 from datetime import datetime
@@ -59,13 +56,9 @@ import pickle
 import warnings
 warnings.simplefilter('ignore')
 
-###############################################
-###############################################
-#
-# Classes
-#
-###############################################
-###############################################
+'''
+classes
+'''
 
 class BicycleAnalysis(object):
     '''
@@ -76,10 +69,44 @@ class BicycleAnalysis(object):
     package scikit-learn
 
     Methods:
-    ??
+    main -> wrapper for the analysis
+    load_data -> loads the analysis data
+    compare_train_test -> plots train and test data to compare in preperation for the
+        analysis
+    basic_exploration -> basic metrics of the data sets
+    pre_process_data -> processes the data for modeling
+    feature_importance -> explores the data for feature engineering
+    generic_models -> tests the data on generic models
+    model_tuning -> tunes a subset of models
+    predict_on_test -> predices the best model from model tuning on the test set
 
     Attributes:
-    ??
+    $$$ file and path variables $$$
+
+    string_data_path -> directory that olds the data
+    string_model_path -> directory that holds the models
+    string_plots_path -> directory that holds the plots
+    string_file_test -> test data file
+    string_file_train -> training data file
+    set_source_files -> container of the data files
+    string_y_col -> name of the column to predict, in train and test sets
+
+    $$$ data containers $$$
+
+    df_test_raw -> raw test data
+    df_train_raw -> raw training data
+    df_test_common -> test data with common columns of traning set; without predict column
+    df_train_common -> training data with common columsn of test set; without predict
+        column
+    df_train_ohe -> one-hot-encoded training set; without predict column
+    df_test_ohe -> one-hot-endodeded test set; without predict column
+    series_train_y -> training data predicted column
+    series_test_y -> test data predicted column
+
+    $$$ others $$$
+
+    list_common_cols -> common columns in train and test set
+    dict_feat_imp_flags -> feature importance flags which produces plots
     '''
 
     #--------------------------------------------------------------------------#
